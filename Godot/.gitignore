@@ -4,3 +4,6 @@
 
 #LLM specific ignores .gguf
 *.gguf
+
+# NobodyWho plugin
+addons/nobodywho/
