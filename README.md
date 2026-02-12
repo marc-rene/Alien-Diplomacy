@@ -85,4 +85,10 @@ loop back around, thus circling around the planets.
 Any enemy boids directly in front of friendly boids will also be shot and have damage
 applied to them.
 
+#### Reminder to make this fully work on your own device
+The LLM Models need to downloaded locally and so does the NobodyWhoAsset libary
+Links to download the essentials that are used to make the LLM work.
+
+https://huggingface.co/bartowski/gemma-2-2b-it-GGUF/blob/main/gemma-2-2b-it-Q4_K_M.gguf
+https://huggingface.co/alela32/USER-bge-m3-Q8_0-GGUF/blob/main/user-bge-m3-q8_0.gguf
 
