@@ -36,7 +36,7 @@ def download_and_move(
         try:
             shutil.move(abs_filename, copy_destination.absolute())
         except shutil.Error as E:
-            logging.warning(f"HEY! {abs_filename} couldn't be moved because : {E.with_traceback()}")
+            logging.warning(f"HEY! {abs_filename} couldn't be moved because : {E}")
     else:
         is_zip = Path(filename).suffix.lower() == ".zip"
 
@@ -46,7 +46,9 @@ def download_and_move(
         if is_zip:
             # extraction time
             with ZipFile(Path(abs_filename).absolute(), "r") as current_zip:
-                temp_name = Path(Path(__file__).parent / f"temp output ({Href_Key})").absolute()
+                temp_name = Path(
+                    Path(__file__).parent / f"temp output ({Href_Key})"
+                ).absolute()
                 logging.info(f"Saving Zip output to {temp_name} for now")
                 try:
                     os.makedirs(temp_name)
@@ -58,19 +60,22 @@ def download_and_move(
                 current_zip.extractall(
                     Path(Path(__file__).parent / temp_name).absolute()
                 )
+                new_path = f"{temp_name}{forward}"
                 logging.info(
-                    f"Trying to move extracted contents to {copy_destination.absolute()}"
+                    f"Trying to move {new_path.absolute()} extracted contents to {copy_destination.absolute()}"
                 )
 
                 try:
-                    shutil.move(f"{temp_name + forward}", copy_destination)
+                    shutil.move(f"{new_path}", copy_destination)
                     logging.info(
-                        f"{temp_name + forward} moved to {copy_destination.absolute()}"
+                        f"{new_path} moved to {copy_destination.absolute()}"
                     )
                     shutil.rmtree(temp_name)
                     current_zip.close()
                 except Exception as E:
-                    logging.error(f"HEY! There was an error while copying everything over : {E.with_traceback()}")
+                    logging.error(
+                        f"HEY! There was an error while copying everything over : {E}"
+                    )
 
         else:
             try:
@@ -108,8 +113,8 @@ def start_download(href: str):
                 copy_destination=Path(__file__).parent.parent / "Godot/addons",
                 forward="/bin/addons/nobodywho",
             )
-     
-    
+
+
 def main():
     with ThreadPoolExecutor(max_workers=len(Download_hrefs)) as ex:
         threads = [ex.submit(start_download, href) for href in Download_hrefs]
@@ -141,6 +146,8 @@ if __name__ == "__main__":
     )
 
     logging.info(f"Running Setup using setup")
-    print("Do NOT close this script!\nIf it looks stuck it probably because download's slow")
+    print(
+        "Do NOT close this script!\nIf it looks stuck it probably because download's slow"
+    )
     main()
     print("Done :)")
