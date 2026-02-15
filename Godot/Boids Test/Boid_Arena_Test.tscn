@@ -1,0 +1,42 @@
+[gd_scene format=3 uid="uid://bxkodyr0wi2y0"]
+
+[ext_resource type="Script" uid="uid://cwmheclul04bv" path="res://Boids Test/Boid/Boid_Manager.gd" id="1_yngf2"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_yngf2"]
+shading_mode = 0
+albedo_color = Color(0.20845, 0.55, 0.1045, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_i5i1a"]
+material = SubResource("StandardMaterial3D_yngf2")
+size = Vector3(0.12, 0.04, 0.07)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_i5i1a"]
+shading_mode = 0
+albedo_color = Color(0.68, 0.10880002, 0.10880002, 1)
+
+[sub_resource type="PrismMesh" id="PrismMesh_dl8ov"]
+material = SubResource("StandardMaterial3D_i5i1a")
+left_to_right = 2.0
+size = Vector3(0.12, 0.04, 0.07)
+
+[sub_resource type="MultiMesh" id="MultiMesh_i5i1a"]
+
+[sub_resource type="MultiMesh" id="MultiMesh_yngf2"]
+transform_format = 1
+
+[node name="BoidArenaTest" type="Node3D" unique_id=2127710614]
+script = ExtResource("1_yngf2")
+
+[node name="Friendly_Mesh" type="MeshInstance3D" parent="." unique_id=1341324297]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1)
+mesh = SubResource("BoxMesh_i5i1a")
+
+[node name="Enemy_Mesh" type="MeshInstance3D" parent="." unique_id=1424924531]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1)
+mesh = SubResource("PrismMesh_dl8ov")
+
+[node name="Friendly_Mesh_MultiManager" type="MultiMeshInstance3D" parent="." unique_id=735583061]
+multimesh = SubResource("MultiMesh_i5i1a")
+
+[node name="Enemy_Mesh_MultiManager" type="MultiMeshInstance3D" parent="." unique_id=752904399]
+multimesh = SubResource("MultiMesh_yngf2")
