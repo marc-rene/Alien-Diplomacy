@@ -35,8 +35,8 @@ def download_and_move(
     if is_file:
         try:
             shutil.move(abs_filename, copy_destination.absolute())
-        except shutil.Error as E:
-            logging.warning(f"HEY! {abs_filename} couldn't be moved because : {E}")
+        except shutil.Error as LeError:
+            logging.warning(f"HEY! {abs_filename} couldn't be moved because : {LeError}")
     else:
         is_zip = Path(filename).suffix.lower() == ".zip"
 
@@ -61,9 +61,7 @@ def download_and_move(
                     Path(Path(__file__).parent / temp_name).absolute()
                 )
                 new_path = f"{temp_name}{forward}"
-                logging.info(
-                    f"Trying to move {new_path.absolute()} extracted contents to {copy_destination.absolute()}"
-                )
+                logging.info(f"Trying to move {new_path} extracted contents to {copy_destination.absolute()}")
 
                 try:
                     shutil.move(f"{new_path}", copy_destination)
@@ -145,7 +143,7 @@ if __name__ == "__main__":
         force=True,
     )
 
-    logging.info(f"Running Setup using setup")
+    logging.info("Running Setup using setup")
     print(
         "Do NOT close this script!\nIf it looks stuck it probably because download's slow"
     )
