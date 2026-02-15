@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="Alien Diplomacy"
-run/main_scene="uid://rwmo0p7bqnb5"
+run/main_scene="uid://bxkodyr0wi2y0"
 config/features=PackedStringArray("4.6", "Mobile")
 config/icon="res://icon.svg"
 
