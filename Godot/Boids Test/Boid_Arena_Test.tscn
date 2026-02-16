@@ -51,7 +51,7 @@ rings = 4
 
 [node name="BoidArenaTest" type="Node3D" unique_id=2127710614 node_paths=PackedStringArray("Friendly_Spawn_Point", "Friendly_Mesh", "Friendly_MultiMesh", "Enemy_Spawn_Point", "Enemy_Mesh", "Enemy_MultiMesh")]
 script = ExtResource("1_yngf2")
-Max_Num_Boids = 1000
+Max_Num_Boids = 7000
 Friendly_Spawn_Point = NodePath("Friendly_Mesh")
 Friendly_Mesh = NodePath("Friendly_Mesh")
 Friendly_MultiMesh = NodePath("Friendly_Mesh_MultiManager")
@@ -60,15 +60,20 @@ Enemy_Mesh = NodePath("Enemy_Mesh")
 Enemy_MultiMesh = NodePath("Enemy_Mesh_MultiManager")
 
 [node name="Friendly_Mesh" type="MeshInstance3D" parent="." unique_id=1341324297]
+physics_interpolation_mode = 2
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1)
+ignore_occlusion_culling = true
 mesh = SubResource("BoxMesh_i5i1a")
 
 [node name="Enemy_Mesh" type="MeshInstance3D" parent="." unique_id=1424924531]
+physics_interpolation_mode = 2
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1)
 rotation_edit_mode = 2
+ignore_occlusion_culling = true
 mesh = SubResource("PrismMesh_dl8ov")
 
 [node name="Friendly_Mesh_MultiManager" type="MultiMeshInstance3D" parent="." unique_id=735583061]
+physics_interpolation_mode = 2
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.051083446, 0, 0)
 rotation_edit_mode = 2
 cast_shadow = 0
@@ -77,19 +82,26 @@ visibility_range_end = 1000.0
 multimesh = SubResource("MultiMesh_i5i1a")
 
 [node name="Enemy_Mesh_MultiManager" type="MultiMeshInstance3D" parent="." unique_id=752904399]
+physics_interpolation_mode = 2
+ignore_occlusion_culling = true
 multimesh = SubResource("MultiMesh_yngf2")
 
 [node name="Camera3D" type="Camera3D" parent="." unique_id=1954150762]
+physics_interpolation_mode = 2
 transform = Transform3D(0.8748312, -0.25769645, 0.41019872, 0, 0.8467693, 0.5319603, -0.48442796, -0.46537545, 0.7407801, 0.7807062, 0.51502573, 1.4390156)
 
 [node name="Friend_NamNam" type="Marker3D" parent="." unique_id=808211701]
+physics_interpolation_mode = 2
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.2426741, -0.45398873, -0.5308094)
 gizmo_extents = 0.5
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Friend_NamNam" unique_id=1000628899]
+physics_interpolation_mode = 2
+ignore_occlusion_culling = true
 mesh = SubResource("SphereMesh_ecogi")
 
 [node name="Label3D" type="Label3D" parent="Friend_NamNam" unique_id=661496338]
+physics_interpolation_mode = 2
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 billboard = 1
 no_depth_test = true
@@ -97,13 +109,17 @@ texture_filter = 0
 text = "FRANCE"
 
 [node name="Enemy_NamNam" type="Marker3D" parent="." unique_id=1847058683]
+physics_interpolation_mode = 2
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.20774412, 0.3113215, -0.5308094)
 gizmo_extents = 0.5
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Enemy_NamNam" unique_id=747362283]
+physics_interpolation_mode = 2
+ignore_occlusion_culling = true
 mesh = SubResource("SphereMesh_yngf2")
 
 [node name="Label3D" type="Label3D" parent="Enemy_NamNam" unique_id=982726508]
+physics_interpolation_mode = 2
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 billboard = 1
 no_depth_test = true

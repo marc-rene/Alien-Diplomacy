@@ -3,7 +3,7 @@ class_name  Boid_Manager
 
 # whats the absoilute maximum number of boids we can have??
 #@export_range(2, 200, 1, "prefer_slider") var Max_Num_Boids := 100
-@export_range(2, 5000, 1, "prefer_slider") var Max_Num_Boids := 100
+@export_range(2, 7500, 1, "prefer_slider") var Max_Num_Boids := 100
 
 # How do we want to divide up our friendlies? (Assuming we want 100 boids max)
 #   0.5 == Equal num of Friends V Enemy (50 v 50)
@@ -44,6 +44,7 @@ var max_friendly_count := 0
 #   from [0:max_friendly_count] is friends, [max_friendly_count : ] is enemies
 var ALL_ENTITIES_ent : PackedByteArray
 
+var OFFSETS_comp : PackedByteArray
 
 # Global Positions of all entities
 # static var GLOBAL_POSITIONS_comp : PackedVector3Array
@@ -64,6 +65,13 @@ func _ready():
     VELOCITIES_comp = PackedVector3Array()
     VELOCITIES_comp.resize(Max_Num_Boids)
     VELOCITIES_comp.fill(Vector3.ZERO)
+    
+    OFFSETS_comp = PackedByteArray()
+    OFFSETS_comp.resize(Max_Num_Boids)
+    for i in range(Max_Num_Boids):
+        OFFSETS_comp.encode_s8(i, randi_range(-100, 100))
+        if OFFSETS_comp[i] == 0:
+            OFFSETS_comp[i] += 1
     
     max_friendly_count = int(Friendly_Enemy_Count_Ratio * Max_Num_Boids)
     
@@ -135,7 +143,7 @@ func _process(delta: float) -> void:
     frame_fence += 1
 
     cam_point = get_boid_transform(1)
-    $Camera3D.global_position = cam_point.origin - cam_point.basis.z + cam_point.basis.y  # behind + up
+    $Camera3D.global_position = cam_point.origin - cam_point.basis.z * 3 + cam_point.basis.y * 2  # behind + up
     $Camera3D.look_at(cam_point.origin, Vector3.UP)
     
     if frame_fence % 800 == 0: 
@@ -146,19 +154,27 @@ func _process(delta: float) -> void:
         $Friend_NamNam.global_position = Vector3(randfn(1.0, max_offset), randfn(1.0, max_offset), randfn(1.0, max_offset))
         $Enemy_NamNam.global_position = Vector3(randfn(-1.0, max_offset), randfn(-1.0, max_offset), randfn(-1.0, max_offset))
         frame_fence = 0
+        #for i in range(Max_Num_Boids / 2):
+            #OFFSETS_comp[i * 2 - 1] = OFFSETS_comp[i] * -1.1 
+            #OFFSETS_comp[i+1] = OFFSETS_comp[i+1] * 1.01 
 
 
 #func make_blurry(target: Vector3, offset:float) -> Vector3:
     #return Vector3(target.x - offset, target.y + offset, target.z + offset)
 
  
-            
-func calculate_force(ent : int) -> Vector3:
-    var target_node = $Friend_NamNam if is_friendly(ent) else $Enemy_NamNam
-    #var to_target = make_blurry(target_node.global_position, 1.0 / ((ent % 20) + 1)) - get_boid_transform(ent).origin
-    var to_target = target_node.global_position - get_boid_transform(ent).origin
-    var desired:Vector3 = to_target.normalized() * max_speed # max speed
-    return desired - VELOCITIES_comp[ent]
+var target_pos : Vector3       
+var to_target : Vector3
+var desried : Vector3
+#func calculate_force(ent : int) -> Vector3:
+    #target_pos = $Friend_NamNam.global_position if is_friendly(ent) else $Enemy_NamNam.global_position
+    ##var to_target = make_blurry(target_node.global_position, 1.0 / ((ent % 20) + 1)) - get_boid_transform(ent).origin
+    #to_target = target_pos - get_boid_transform(ent).origin
+    #to_target.x += (1.0 / OFFSETS_comp[ent])
+    #to_target.y += (1.1 / OFFSETS_comp[ent])
+    #to_target.z += (-1.2 / OFFSETS_comp[ent])
+    #desried = to_target.normalized() * max_speed # max speed
+    #return desried - VELOCITIES_comp[ent]
 
 
 
@@ -170,7 +186,20 @@ func _physics_process(delta: float) -> void:
     for ent in range(ALL_ENTITIES_ent.size()):
         if !is_alive(ent): continue
 
-        force = calculate_force(ent)
+        target_pos = $Friend_NamNam.global_position if is_friendly(ent) else $Enemy_NamNam.global_position
+        #target_pos.x = randfn(target_pos.x, 1.0)
+        #target_pos.y = randfn(target_pos.y, 1.0)
+        #target_pos.z = randfn(target_pos.z, 1.0)        
+        
+        #var to_target = make_blurry(target_node.global_position, 1.0 / ((ent % 20) + 1)) - get_boid_transform(ent).origin
+        to_target = target_pos - get_boid_transform(ent).origin
+        to_target.x += (2.0 / OFFSETS_comp[ent])
+        to_target.y += (2.1 / OFFSETS_comp[ent])
+        to_target.z += (-2.2 / OFFSETS_comp[ent])
+        desried = to_target.normalized() * max_speed # max speed
+        
+        force = desried - VELOCITIES_comp[ent]
+        #force = calculate_force(ent)
         accel = force / mass # mass = 1
         VELOCITIES_comp[ent] += accel * delta
         new_trans = get_boid_transform(ent)
