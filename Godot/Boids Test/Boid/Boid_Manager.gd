@@ -2,7 +2,8 @@ extends Node3D
 class_name  Boid_Manager
 
 # whats the absoilute maximum number of boids we can have??
-@export_range(2, 200, 1, "prefer_slider") var Max_Num_Boids := 100
+#@export_range(2, 200, 1, "prefer_slider") var Max_Num_Boids := 100
+@export_range(2, 5000, 1, "prefer_slider") var Max_Num_Boids := 100
 
 # How do we want to divide up our friendlies? (Assuming we want 100 boids max)
 #   0.5 == Equal num of Friends V Enemy (50 v 50)
@@ -21,6 +22,11 @@ var max_friendly_count := 0
 @export var Enemy_Spawn_Point : Node3D   
 @export var Enemy_Mesh : MeshInstance3D
 @export var Enemy_MultiMesh : MultiMeshInstance3D
+
+@export var max_speed := 10.0
+@export var banking := 0.05
+@export var mass := 3.0
+
 
 
 
@@ -100,8 +106,8 @@ func is_enemy(entity_index: int) -> bool:
 
 
 func get_boid_transform(entity_index: int) -> Transform3D:
-    if is_alive(entity_index) == false:
-        return Transform3D.IDENTITY
+    #if is_alive(entity_index) == false:
+        #return Transform3D.IDENTITY
     
     # multimesh buffer is a 4*3 matrix
     #var temp_trans := Transform3D(Vector3.ZERO, Vector3.ZERO, Vector3.ZERO, Vector3.ZERO)
@@ -113,39 +119,77 @@ func get_boid_transform(entity_index: int) -> Transform3D:
             
 
             
-var i := 0
+var frame_fence := 0
+var keep_spawning_f : bool = true
+var keep_spawning_e : bool = true
+const max_offset : float = 10.0
+var cam_point : Transform3D
 func _process(delta: float) -> void:
     if not inited:
         return
-    spawn_enemy()
-    spawn_friendly()
+    if keep_spawning_f: 
+        keep_spawning_f = spawn_friendly()
+    if keep_spawning_e: 
+        keep_spawning_e = spawn_enemy()
     
-    for ent in range(ALL_ENTITIES_ent.size()):
-        if is_alive(ent):
-            #print("Moving Ent #" + str(ent) + " from " + str(get_boid_transform(ent)) + " to " + str(get_boid_transform(ent).translated(VELOCITIES_comp[ent])) )
-            #set_boid_transform(ent, (get_boid_transform(ent).translated(VELOCITIES_comp[ent]) * delta * 0.1) )
-            var new_trans := get_boid_transform(ent)
-            new_trans.origin += VELOCITIES_comp[ent] * delta
-            new_trans.basis = Basis(Quaternion(Vector3.FORWARD, VELOCITIES_comp[ent].normalized()))
+    frame_fence += 1
+
+    cam_point = get_boid_transform(1)
+    $Camera3D.global_position = cam_point.origin - cam_point.basis.z + cam_point.basis.y  # behind + up
+    $Camera3D.look_at(cam_point.origin, Vector3.UP)
+    
+    if frame_fence % 800 == 0: 
+        print("FPS: " + str(Engine.get_frames_per_second()) )
+        print("Homies: " + str(Friendly_MultiMesh.multimesh.instance_count) + "\tbuffer size: " + str(Friendly_MultiMesh.multimesh.buffer.size()))
+        print("Enemies: " + str(Enemy_MultiMesh.multimesh.instance_count) + "\tbuffer size: " + str(Enemy_MultiMesh.multimesh.buffer.size()))
+        print("Total: " + str(ALL_ENTITIES_ent.size()) + "\t Velocities too: " + str(VELOCITIES_comp.size()) )
+        $Friend_NamNam.global_position = Vector3(randfn(1.0, max_offset), randfn(1.0, max_offset), randfn(1.0, max_offset))
+        $Enemy_NamNam.global_position = Vector3(randfn(-1.0, max_offset), randfn(-1.0, max_offset), randfn(-1.0, max_offset))
+        frame_fence = 0
+
+
+#func make_blurry(target: Vector3, offset:float) -> Vector3:
+    #return Vector3(target.x - offset, target.y + offset, target.z + offset)
+
+ 
             
-            set_boid_transform(ent, new_trans)
+func calculate_force(ent : int) -> Vector3:
+    var target_node = $Friend_NamNam if is_friendly(ent) else $Enemy_NamNam
+    #var to_target = make_blurry(target_node.global_position, 1.0 / ((ent % 20) + 1)) - get_boid_transform(ent).origin
+    var to_target = target_node.global_position - get_boid_transform(ent).origin
+    var desired:Vector3 = to_target.normalized() * max_speed # max speed
+    return desired - VELOCITIES_comp[ent]
 
 
 
+var force : Vector3
+var accel : Vector3
+var new_trans : Transform3D
+var temp_up : Vector3
 func _physics_process(delta: float) -> void:
     for ent in range(ALL_ENTITIES_ent.size()):
-        if is_alive(ent):
-            $Label3D.transform = get_boid_transform(ent)
-            $Label3D.text = str(get_boid_transform(ent))
-            Performance
-            #print("#" + str(ent) + "\n\tPosit: " + str($Label3D.global_position) + "\n\tRotat" + str($Label3D.global_rotation) + "\n\tScale" + str($Label3D.scale) + "\n\tBasis" + str($Label3D.basis) + "\n\tTrans" + str($Label3D.global_transform) )
- 
-func spawn_mesh(is_friendly : bool):
-    var targetted_multimesh = Friendly_MultiMesh if is_friendly else Enemy_MultiMesh
+        if !is_alive(ent): continue
+
+        force = calculate_force(ent)
+        accel = force / mass # mass = 1
+        VELOCITIES_comp[ent] += accel * delta
+        new_trans = get_boid_transform(ent)
+
+        if VELOCITIES_comp[ent].length_squared() > 0.1:
+            temp_up = new_trans.basis.y.lerp((Vector3.UP + accel * banking).normalized(), delta * 5)
+            new_trans = new_trans.looking_at(new_trans.origin - VELOCITIES_comp[ent], temp_up)
+        new_trans.origin += VELOCITIES_comp[ent] * delta
+
+        set_boid_transform(ent, new_trans)
+            
+
+        #$Label3D.transform = get_boid_transform(ent)
+        #$Label3D.text = str(get_boid_transform(ent))
+        #print("#" + str(ent) + "\n\tPosit: " + str($Label3D.global_position) + "\n\tRotat" + str($Label3D.global_rotation) + "\n\tScale" + str($Label3D.scale) + "\n\tBasis" + str($Label3D.basis) + "\n\tTrans" + str($Label3D.global_transform) )
     
 
 func set_boid_transform(ship_entity_index : int, new_transform : Transform3D):
-    if ship_entity_index < max_friendly_count:
+    if is_friendly(ship_entity_index):
         Friendly_MultiMesh.multimesh.set_instance_transform(ship_entity_index, new_transform)
     else:
         Enemy_MultiMesh.multimesh.set_instance_transform((ship_entity_index-max_friendly_count), new_transform)
@@ -196,12 +240,10 @@ func spawn_ship(force_spawn : bool, is_friendly : bool) -> bool:
     start_transform = start_transform.looking_at(Vector3.DOWN)
     #ALL_ENTITIES_ent.encode_s8(free_index, start_health) 
     ALL_ENTITIES_ent[free_index] = start_health
-    VELOCITIES_comp[free_index] = Vector3.DOWN  # Start them off flying Downwards
+    VELOCITIES_comp[free_index] = Vector3(randf_range(-0.02, 0.02), randf_range(-0.8, -4), randf_range(-0.02, 0.02)) # Start them off flying Downwards
     
     set_boid_transform(free_index, start_transform)
     
-    
-
     
     return true
 
