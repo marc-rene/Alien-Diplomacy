@@ -129,7 +129,18 @@ func get_boid_transform(entity_index: int) -> Transform3D:
     else:
         return Enemy_MultiMesh.multimesh.get_instance_transform(entity_index - max_friendly_count)
             
-
+    
+var temp_buffer : PackedByteArray        
+func count_free_spots(friendly_spots : bool) -> int:
+    temp_buffer.clear()
+    if friendly_spots:
+        temp_buffer.slice(0, max_friendly_count)
+    else:
+        temp_buffer.slice(max_friendly_count)
+    
+    return temp_buffer.count(0)
+    
+            
             
 var frame_fence := 0
 var keep_spawning_f : bool = true
@@ -209,7 +220,8 @@ var temp_up : Vector3
 
 func _physics_process(delta: float) -> void:
     for ent in range(Max_Num_Boids):
-        if !is_alive(ent): continue
+        if is_alive(ent) == false: 
+            continue
 
         target_pos = friendly_pos if is_friendly(ent) else enemy_pos
         new_trans = get_boid_transform(ent)
@@ -247,9 +259,7 @@ func _physics_process(delta: float) -> void:
             temp_friend_mesh_push_buffer[(12 * ent) + 9] = new_trans.basis.y.z
             temp_friend_mesh_push_buffer[(12 * ent) + 10] = new_trans.basis.z.z
             temp_friend_mesh_push_buffer[(12 * ent) + 11] = new_trans.origin.z
-        elif ent == max_friendly_count:
-            #print("Pushed F buffer")
-            Friendly_MultiMesh.multimesh.buffer = temp_friend_mesh_push_buffer
+
         if ent >= max_friendly_count: #not friendlY?
             temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 0] = new_trans.basis.x.x
             temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 1] = new_trans.basis.y.x
@@ -263,11 +273,10 @@ func _physics_process(delta: float) -> void:
             temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 9] = new_trans.basis.y.z
             temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 10] = new_trans.basis.z.z
             temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 11] = new_trans.origin.z
-        if ent == (Max_Num_Boids-1):
-            #print("Pushed ENEMY buffer")
-            Enemy_MultiMesh.multimesh.buffer = temp_enemy_mesh_push_buffer
             
-        #set_boid_transform(ent, new_trans)
+        #set_boid_transform(ent, new_trans) # Godot is terrible with CPU -> gpu calls
+    Friendly_MultiMesh.multimesh.buffer = temp_friend_mesh_push_buffer
+    Enemy_MultiMesh.multimesh.buffer = temp_enemy_mesh_push_buffer
             
 
         #$Label3D.transform = get_boid_transform(ent)
