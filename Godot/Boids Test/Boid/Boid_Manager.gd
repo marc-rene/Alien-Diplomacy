@@ -3,7 +3,7 @@ class_name  Boid_Manager
 
 # whats the absoilute maximum number of boids we can have??
 #@export_range(2, 200, 1, "prefer_slider") var Max_Num_Boids := 100
-@export_range(2, 10000, 1, "prefer_slider") var Max_Num_Boids := 100
+@export_range(2, 50000, 1, "prefer_slider") var Max_Num_Boids := 100
 
 # How do we want to divide up our friendlies? (Assuming we want 100 boids max)
 #   0.5 == Equal num of Friends V Enemy (50 v 50)
@@ -86,8 +86,8 @@ func _ready():
     
     print("Max num of boids: %d\n\tFriendly boids: %d\n\tEnemy boids: %d" % [ALL_ENTITIES_ent.size(), max_friendly_count, Max_Num_Boids - max_friendly_count])
     
-    Friendly_MultiMesh.multimesh.mesh = $Friendly_Mesh.mesh
-    Enemy_MultiMesh.multimesh.mesh = $Enemy_Mesh.mesh
+    Friendly_MultiMesh.multimesh.mesh = Friendly_Mesh.mesh
+    Enemy_MultiMesh.multimesh.mesh = Enemy_Mesh.mesh
     
     #Friendly_MultiMesh.multimesh.transform_format = MultiMesh.TRANSFORM_3D # 3D format
     #Enemy_MultiMesh.multimesh.transform_format = MultiMesh.TRANSFORM_3D
@@ -182,6 +182,8 @@ func _process(delta: float) -> void:
     $Camera3D.global_position = cam_point.origin - cam_point.basis.z * 3 + cam_point.basis.y * 2  # behind + up
     $Camera3D.look_at(cam_point.origin, Vector3.UP)
     
+    $Camera3D/Label.text = "FPS: " + str(Engine.get_frames_per_second()) + "\nFriendly Boids: " + str(french-1) + "\nEnemy Boids: " + str(eeees-1) + "\nPhysics FPS: " + str(Engine.physics_ticks_per_second)
+    
     if frame_fence % 800 == 0: 
         print("FPS: " + str(Engine.get_frames_per_second()) )
         print("Homies: " + str(Friendly_MultiMesh.multimesh.instance_count) + "\tbuffer size: " + str(Friendly_MultiMesh.multimesh.buffer.size()))
@@ -221,9 +223,68 @@ var force : Vector3
 var accel : Vector3
 var new_trans : Transform3D
 var temp_up : Vector3
-
+var struggling_level : int = 0
+var prev_struggle : int = 999999
+const frames_before_change : int = 20
+var physics_fence : int = 0
 func _physics_process(delta: float) -> void:
-    
+    struggling_level = int(Engine.get_frames_per_second() / 10)
+    print("Struggling: " + str(Engine.get_frames_per_second()) + "/ 10 = " + str(struggling_level) + " < " + str(prev_struggle) + "\t\t#" + str(physics_fence))
+    match struggling_level:
+        0:
+            if struggling_level != prev_struggle:
+                prev_struggle = struggling_level
+                printerr("OH MY SWEET HOVERING JESUS STRUGGLING")
+                Engine.max_physics_steps_per_frame = 1
+                Engine.physics_ticks_per_second = 3
+                physics_fence = 0
+            physics_fence += 10
+        1:
+            if struggling_level != prev_struggle and physics_fence >= frames_before_change :
+                prev_struggle = struggling_level
+                printerr("DAMN STRUGGLING")
+                Engine.max_physics_steps_per_frame = 1
+                Engine.physics_ticks_per_second = 5
+                physics_fence = 0
+            physics_fence += 3
+        2:
+            if struggling_level != prev_struggle and physics_fence >= frames_before_change :
+                prev_struggle = struggling_level
+                printerr("Damn... Kinda struggling")
+                Engine.max_physics_steps_per_frame = 1
+                Engine.physics_ticks_per_second = 10
+                physics_fence = 0
+            physics_fence += 3
+        3:
+            if struggling_level != prev_struggle and physics_fence >= frames_before_change:
+                prev_struggle = struggling_level
+                printerr("...This is getting worrying?")
+                Engine.max_physics_steps_per_frame = 2
+                Engine.physics_ticks_per_second = 15
+                physics_fence = 0
+            physics_fence += 1
+        4:
+            if struggling_level != prev_struggle and physics_fence >= frames_before_change:
+                prev_struggle = struggling_level
+                printerr("Slowing down a smidge?")
+                Engine.max_physics_steps_per_frame = 3
+                Engine.physics_ticks_per_second = 25
+                physics_fence = 0
+            physics_fence += 1
+        _:
+            if struggling_level != prev_struggle:
+                printerr("looks..... peachy?")
+                prev_struggle = struggling_level
+                Engine.max_physics_steps_per_frame = 4
+                Engine.physics_ticks_per_second = 30
+                physics_fence = 0
+            physics_fence += 1
+        
+            
+            
+            
+            
+        
     for ent in range(Max_Num_Boids):
         if inited and is_alive(ent) == false: 
             continue
