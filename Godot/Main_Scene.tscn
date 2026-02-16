@@ -10,6 +10,7 @@ ground_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
 sky_material = SubResource("ProceduralSkyMaterial_8sucx")
 
 [sub_resource type="Environment" id="Environment_tkmsp"]
+background_energy_multiplier = 0.0
 sky = SubResource("Sky_7fr83")
 ambient_light_source = 2
 ambient_light_color = Color(1, 1, 1, 1)
@@ -22,3 +23,4 @@ tonemap_mode = 2
 environment = SubResource("Environment_tkmsp")
 
 [node name="Player" parent="." unique_id=1047638996 instance=ExtResource("1_8sucx")]
+current = true

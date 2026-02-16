@@ -15,9 +15,18 @@ run/main_scene="uid://dmnqq8qs43a8"
 config/features=PackedStringArray("4.6", "Mobile")
 config/icon="res://icon.svg"
 
+[autoload]
+
+XRToolsUserSettings="*uid://bqgb8i74tm0t"
+XRToolsRumbleManager="*uid://by853dk86g1qw"
+
 [dotnet]
 
 project/assembly_name="Alien Diplomacy"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/godot-xr-tools/plugin.cfg")
 
 [memory]
 

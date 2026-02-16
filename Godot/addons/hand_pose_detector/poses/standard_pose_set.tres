@@ -1,7 +1,7 @@
-[gd_resource type="Resource" script_class="HandPoseSet" load_steps=11 format=3 uid="uid://ckjd0xa2a240p"]
+[gd_resource type="Resource" script_class="HandPoseSet" format=3 uid="uid://ckjd0xa2a240p"]
 
-[ext_resource type="Script" path="res://addons/hand_pose_detector/hand_pose.gd" id="1_u751n"]
-[ext_resource type="Script" path="res://addons/hand_pose_detector/hand_pose_set.gd" id="2_nc32a"]
+[ext_resource type="Script" uid="uid://cykalr1lobddm" path="res://addons/hand_pose_detector/hand_pose.gd" id="1_u751n"]
+[ext_resource type="Script" uid="uid://bu0mb17khf8r2" path="res://addons/hand_pose_detector/hand_pose_set.gd" id="2_nc32a"]
 [ext_resource type="Resource" uid="uid://sy66yqr1xila" path="res://addons/hand_pose_detector/poses/thumbs_up.tres" id="2_ucshc"]
 [ext_resource type="Resource" uid="uid://ra50ueubhepa" path="res://addons/hand_pose_detector/poses/point_thumb_up.tres" id="3_06v1h"]
 [ext_resource type="Resource" uid="uid://ceofxcl7q122" path="res://addons/hand_pose_detector/poses/point.tres" id="3_ngilc"]

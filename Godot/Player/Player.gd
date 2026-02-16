@@ -14,7 +14,7 @@ signal NONE_signal   # Open Hand
 
 
 var xr_interface: XRInterface
-@onready var environment:Environment = $"WorldEnvironment".environment
+
 
 func enable_passthrough() -> bool:
     if xr_interface and xr_interface.is_passthrough_supported():
@@ -72,13 +72,13 @@ func _on_hand_pose_detector_pose_started_L(p_name: String) -> void:
     pose_change(p_name, true)
     %L_Label.text = p_name
     
-func _on_hand_pose_detector_pose_started_R(p_name: String) -> void:
-    pose_change(p_name, true)
+func _on_hand_pose_detector_pose_ended_L(p_name: String) -> void:
+    pose_change(p_name, false)
     %L_Label.text = "L-Hand"
 
 
-func _on_hand_pose_detector_pose_ended_L(p_name: String) -> void:
-    pose_change(p_name, false)
+func _on_hand_pose_detector_pose_started_R(p_name: String) -> void:
+    pose_change(p_name, true)
     %R_Label.text = p_name
 
 func _on_hand_pose_detector_pose_ended_R(p_name: String) -> void:
