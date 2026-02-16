@@ -1,0 +1,35 @@
+[gd_scene format=3 uid="uid://c5xelfdy6wwhs"]
+
+[ext_resource type="Shader" uid="uid://dt6txrvefp8cw" path="res://Art/Planets/Shaders/Planet_Body_Shader.gdshader" id="1_2s4c6"]
+[ext_resource type="Texture2D" uid="uid://dlfd00xwh74qw" path="res://Art/Planets/Noises/Gassy-Looking.tres" id="2_2s4c6"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_3iko2"]
+render_priority = 0
+shader = ExtResource("1_2s4c6")
+shader_parameter/emit = 0.0
+shader_parameter/color_1 = Color(0.41867724, 0.33491457, 0, 1)
+shader_parameter/color_1_treshold = 0.400000019
+shader_parameter/color_1_roughness = 1.0
+shader_parameter/color_1_emit = false
+shader_parameter/color_2 = Color(0.68961865, 0.44637764, 0.22290891, 1)
+shader_parameter/color_2_treshold = 0.350000016625
+shader_parameter/color_3 = Color(0.59082425, 0.44041798, 0.1973046, 1)
+shader_parameter/color_3_treshold = 0.450000021375
+shader_parameter/color_4 = Color(0.7631492, 0.63289136, 0.49157864, 1)
+shader_parameter/color_4_treshold = 0.5600000266
+shader_parameter/color_5 = Color(0.29640245, 0.2930749, 0.16680661, 1)
+shader_parameter/color_5_treshold = 0.666000031635
+shader_parameter/noise_gaseous = true
+shader_parameter/noise_gaseous_speed = 0.02000000095
+shader_parameter/noise_scale = 1.400000019
+shader_parameter/noise = ExtResource("2_2s4c6")
+
+[sub_resource type="SphereMesh" id="SphereMesh_k0128"]
+material = SubResource("ShaderMaterial_3iko2")
+radius = 1.0
+height = 2.0
+radial_segments = 16
+rings = 8
+
+[node name="PlanetKnockOffJupiter" type="MeshInstance3D" unique_id=732950670]
+mesh = SubResource("SphereMesh_k0128")

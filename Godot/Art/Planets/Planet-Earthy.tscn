@@ -8,24 +8,28 @@ render_priority = 0
 shader = ExtResource("1_2mofk")
 shader_parameter/emit = 0.0
 shader_parameter/color_1 = Color(0.17, 0.55, 1, 1)
-shader_parameter/color_1_treshold = 0.54
+shader_parameter/color_1_treshold = 0.470000022325
 shader_parameter/color_1_roughness = 0.1
 shader_parameter/color_1_emit = false
 shader_parameter/color_2 = Color(1, 0.94, 0.76, 1)
-shader_parameter/color_2_treshold = 0.56
+shader_parameter/color_2_treshold = 0.5200000247
 shader_parameter/color_3 = Color(0.34, 0.74, 0.5, 1)
-shader_parameter/color_3_treshold = 0.6
+shader_parameter/color_3_treshold = 0.58000002755
 shader_parameter/color_4 = Color(0.27, 0.62, 0.42, 1)
-shader_parameter/color_4_treshold = 0.7
+shader_parameter/color_4_treshold = 0.70000003325
 shader_parameter/color_5 = Color(1, 1, 1, 1)
 shader_parameter/color_5_treshold = 1.0
 shader_parameter/noise_gaseous = false
-shader_parameter/noise_gaseous_speed = 0.10000000149012
+shader_parameter/noise_gaseous_speed = 0.0025
 shader_parameter/noise_scale = 1.0
 shader_parameter/noise = ExtResource("2_3iko2")
 
 [sub_resource type="SphereMesh" id="SphereMesh_k0128"]
 material = SubResource("ShaderMaterial_3iko2")
+radius = 0.8
+height = 1.6
+radial_segments = 16
+rings = 10
 
 [node name="PlanetEarthy" type="MeshInstance3D" unique_id=732950670]
 mesh = SubResource("SphereMesh_k0128")

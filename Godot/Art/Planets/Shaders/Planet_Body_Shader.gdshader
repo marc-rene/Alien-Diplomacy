@@ -1,7 +1,8 @@
 // Based on: https://www.reddit.com/r/godot/comments/gqhy3g/procedural_planet_generator_based_on_planetarium/
 shader_type spatial;
 
-uniform float emit : hint_range(0, 16) = 0.0;
+uniform float emit : hint_range(0, 16) = 0.0; // Emissive / BRIGHT AF
+
 uniform vec4 color_1 : source_color = vec4(0.17, 0.55, 1.0, 1.0);
 uniform float color_1_treshold : hint_range(0, 1) = 0.54;
 uniform float color_1_roughness : hint_range(0, 1) = 0.1;

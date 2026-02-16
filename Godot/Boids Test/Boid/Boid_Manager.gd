@@ -59,6 +59,10 @@ var VELOCITIES_comp : PackedVector3Array
 
 var inited := false
 func _ready():
+    if Friendly_Spawn_Point == null or Friendly_Mesh == null or Friendly_MultiMesh == null or Enemy_Spawn_Point == null or Enemy_Mesh == null  or Enemy_MultiMesh == null:
+        printerr("Yo aint said what yo homies or estonies is!!!")
+        set_physics_process(false)
+        return 
     ALL_ENTITIES_ent = PackedByteArray()
     ALL_ENTITIES_ent.resize(Max_Num_Boids)
     ALL_ENTITIES_ent.fill(0)    # You're all deactivated!
@@ -219,8 +223,9 @@ var new_trans : Transform3D
 var temp_up : Vector3
 
 func _physics_process(delta: float) -> void:
+    
     for ent in range(Max_Num_Boids):
-        if is_alive(ent) == false: 
+        if inited and is_alive(ent) == false: 
             continue
 
         target_pos = friendly_pos if is_friendly(ent) else enemy_pos

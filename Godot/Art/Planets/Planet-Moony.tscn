@@ -7,18 +7,18 @@
 render_priority = 0
 shader = ExtResource("1_t7fmj")
 shader_parameter/emit = 0.0
-shader_parameter/color_1 = Color(0.7776695, 0.8933242, 0.9675744, 1)
-shader_parameter/color_1_treshold = 0.1130000053675
+shader_parameter/color_1 = Color(0.69153994, 0.8525255, 0.95416695, 1)
+shader_parameter/color_1_treshold = 0.250000011875
 shader_parameter/color_1_roughness = 0.0
 shader_parameter/color_1_emit = false
-shader_parameter/color_2 = Color(0.8141203, 0.831549, 0.8198, 1)
-shader_parameter/color_2_treshold = 0.458000021755
-shader_parameter/color_3 = Color(0.57944983, 0.7565477, 0.86908937, 1)
-shader_parameter/color_3_treshold = 0.538000025555
+shader_parameter/color_2 = Color(0.876508, 0.93137527, 0.96421784, 1)
+shader_parameter/color_2_treshold = 0.350000016625
+shader_parameter/color_3 = Color(0.6043917, 0.7720768, 0.88058746, 1)
+shader_parameter/color_3_treshold = 0.450000021375
 shader_parameter/color_4 = Color(0.9254902, 0.9372549, 0.972549, 1)
-shader_parameter/color_4_treshold = 0.6150000292125
-shader_parameter/color_5 = Color(0.81960785, 0.84705883, 0.8862745, 1)
-shader_parameter/color_5_treshold = 1.0
+shader_parameter/color_4_treshold = 0.5600000266
+shader_parameter/color_5 = Color(0.8285519, 0.85471165, 0.89208716, 1)
+shader_parameter/color_5_treshold = 0.666000031635
 shader_parameter/noise_gaseous = false
 shader_parameter/noise_gaseous_speed = 0.0350000016625
 shader_parameter/noise_scale = 1.0
@@ -26,6 +26,10 @@ shader_parameter/noise = ExtResource("2_t7fmj")
 
 [sub_resource type="SphereMesh" id="SphereMesh_k0128"]
 material = SubResource("ShaderMaterial_3iko2")
+radius = 0.25
+height = 0.5
+radial_segments = 16
+rings = 8
 
 [node name="PlanetMoony" type="MeshInstance3D" unique_id=732950670]
 mesh = SubResource("SphereMesh_k0128")
