@@ -3,7 +3,7 @@ class_name  Boid_Manager
 
 # whats the absoilute maximum number of boids we can have??
 #@export_range(2, 200, 1, "prefer_slider") var Max_Num_Boids := 100
-@export_range(2, 7500, 1, "prefer_slider") var Max_Num_Boids := 100
+@export_range(2, 10000, 1, "prefer_slider") var Max_Num_Boids := 100
 
 # How do we want to divide up our friendlies? (Assuming we want 100 boids max)
 #   0.5 == Equal num of Friends V Enemy (50 v 50)
@@ -23,11 +23,12 @@ var max_friendly_count := 0
 @export var Enemy_Mesh : MeshInstance3D
 @export var Enemy_MultiMesh : MultiMeshInstance3D
 
-@export var max_speed := 10.0
+@export var max_speed := 2.0
 @export var banking := 0.05
-@export var mass := 3.0
+@export var mass := 2.0
 
-
+var temp_friend_mesh_push_buffer : PackedFloat32Array
+var temp_enemy_mesh_push_buffer : PackedFloat32Array
 
 
 
@@ -66,6 +67,7 @@ func _ready():
     VELOCITIES_comp.resize(Max_Num_Boids)
     VELOCITIES_comp.fill(Vector3.ZERO)
     
+    
     OFFSETS_comp = PackedByteArray()
     OFFSETS_comp.resize(Max_Num_Boids)
     for i in range(Max_Num_Boids):
@@ -75,6 +77,8 @@ func _ready():
     
     max_friendly_count = int(Friendly_Enemy_Count_Ratio * Max_Num_Boids)
     
+    temp_friend_mesh_push_buffer.resize(max_friendly_count * 12)
+    temp_enemy_mesh_push_buffer.resize((Max_Num_Boids - max_friendly_count) * 12)
     
     print("Max num of boids: %d\n\tFriendly boids: %d\n\tEnemy boids: %d" % [ALL_ENTITIES_ent.size(), max_friendly_count, Max_Num_Boids - max_friendly_count])
     
@@ -132,17 +136,34 @@ var keep_spawning_f : bool = true
 var keep_spawning_e : bool = true
 const max_offset : float = 10.0
 var cam_point : Transform3D
+
+var friendly_pos : Vector3
+var enemy_pos : Vector3
+
+var french = 0
+var eeees = 0
+
 func _process(delta: float) -> void:
     if not inited:
         return
     if keep_spawning_f: 
         keep_spawning_f = spawn_friendly()
+        french += 1
+        #print("French num: " + str(french) + "\tV: " + str(VELOCITIES_comp[french-1]))
+        
+        #cam_point = get_boid_transform(0)
+        if keep_spawning_f == false:
+            print("STOPPED FRENCH")
     if keep_spawning_e: 
         keep_spawning_e = spawn_enemy()
+        eeees += 1
+        #print("Estonias num: " + str(eeees) + "\tV: " + str(VELOCITIES_comp[max_friendly_count+eeees-1]))
+        if keep_spawning_e == false:
+            print("STOPPED ESTONIA")
+            
     
+    cam_point = get_boid_transform(max_friendly_count)
     frame_fence += 1
-
-    cam_point = get_boid_transform(1)
     $Camera3D.global_position = cam_point.origin - cam_point.basis.z * 3 + cam_point.basis.y * 2  # behind + up
     $Camera3D.look_at(cam_point.origin, Vector3.UP)
     
@@ -152,7 +173,10 @@ func _process(delta: float) -> void:
         print("Enemies: " + str(Enemy_MultiMesh.multimesh.instance_count) + "\tbuffer size: " + str(Enemy_MultiMesh.multimesh.buffer.size()))
         print("Total: " + str(ALL_ENTITIES_ent.size()) + "\t Velocities too: " + str(VELOCITIES_comp.size()) )
         $Friend_NamNam.global_position = Vector3(randfn(1.0, max_offset), randfn(1.0, max_offset), randfn(1.0, max_offset))
+        friendly_pos = $Friend_NamNam.global_position
+        
         $Enemy_NamNam.global_position = Vector3(randfn(-1.0, max_offset), randfn(-1.0, max_offset), randfn(-1.0, max_offset))
+        enemy_pos = $Enemy_NamNam.global_position
         frame_fence = 0
         #for i in range(Max_Num_Boids / 2):
             #OFFSETS_comp[i * 2 - 1] = OFFSETS_comp[i] * -1.1 
@@ -182,17 +206,18 @@ var force : Vector3
 var accel : Vector3
 var new_trans : Transform3D
 var temp_up : Vector3
+
 func _physics_process(delta: float) -> void:
-    for ent in range(ALL_ENTITIES_ent.size()):
+    for ent in range(Max_Num_Boids):
         if !is_alive(ent): continue
 
-        target_pos = $Friend_NamNam.global_position if is_friendly(ent) else $Enemy_NamNam.global_position
+        target_pos = friendly_pos if is_friendly(ent) else enemy_pos
+        new_trans = get_boid_transform(ent)
         #target_pos.x = randfn(target_pos.x, 1.0)
         #target_pos.y = randfn(target_pos.y, 1.0)
         #target_pos.z = randfn(target_pos.z, 1.0)        
-        
         #var to_target = make_blurry(target_node.global_position, 1.0 / ((ent % 20) + 1)) - get_boid_transform(ent).origin
-        to_target = target_pos - get_boid_transform(ent).origin
+        to_target = target_pos - new_trans.origin
         to_target.x += (2.0 / OFFSETS_comp[ent])
         to_target.y += (2.1 / OFFSETS_comp[ent])
         to_target.z += (-2.2 / OFFSETS_comp[ent])
@@ -202,14 +227,47 @@ func _physics_process(delta: float) -> void:
         #force = calculate_force(ent)
         accel = force / mass # mass = 1
         VELOCITIES_comp[ent] += accel * delta
-        new_trans = get_boid_transform(ent)
+        #new_trans = get_boid_transform(ent)
 
         if VELOCITIES_comp[ent].length_squared() > 0.1:
             temp_up = new_trans.basis.y.lerp((Vector3.UP + accel * banking).normalized(), delta * 5)
             new_trans = new_trans.looking_at(new_trans.origin - VELOCITIES_comp[ent], temp_up)
         new_trans.origin += VELOCITIES_comp[ent] * delta
 
-        set_boid_transform(ent, new_trans)
+        if ent < max_friendly_count: #is friendlY?
+            temp_friend_mesh_push_buffer[(12 * ent) + 0] = new_trans.basis.x.x
+            temp_friend_mesh_push_buffer[(12 * ent) + 1] = new_trans.basis.y.x
+            temp_friend_mesh_push_buffer[(12 * ent) + 2] = new_trans.basis.z.x
+            temp_friend_mesh_push_buffer[(12 * ent) + 3] = new_trans.origin.x
+            temp_friend_mesh_push_buffer[(12 * ent) + 4] = new_trans.basis.x.y
+            temp_friend_mesh_push_buffer[(12 * ent) + 5] = new_trans.basis.y.y
+            temp_friend_mesh_push_buffer[(12 * ent) + 6] = new_trans.basis.z.y
+            temp_friend_mesh_push_buffer[(12 * ent) + 7] = new_trans.origin.y
+            temp_friend_mesh_push_buffer[(12 * ent) + 8] = new_trans.basis.x.z
+            temp_friend_mesh_push_buffer[(12 * ent) + 9] = new_trans.basis.y.z
+            temp_friend_mesh_push_buffer[(12 * ent) + 10] = new_trans.basis.z.z
+            temp_friend_mesh_push_buffer[(12 * ent) + 11] = new_trans.origin.z
+        elif ent == max_friendly_count:
+            #print("Pushed F buffer")
+            Friendly_MultiMesh.multimesh.buffer = temp_friend_mesh_push_buffer
+        if ent >= max_friendly_count: #not friendlY?
+            temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 0] = new_trans.basis.x.x
+            temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 1] = new_trans.basis.y.x
+            temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 2] = new_trans.basis.z.x
+            temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 3] = new_trans.origin.x
+            temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 4] = new_trans.basis.x.y
+            temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 5] = new_trans.basis.y.y
+            temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 6] = new_trans.basis.z.y
+            temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 7] = new_trans.origin.y
+            temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 8] = new_trans.basis.x.z
+            temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 9] = new_trans.basis.y.z
+            temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 10] = new_trans.basis.z.z
+            temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 11] = new_trans.origin.z
+        if ent == (Max_Num_Boids-1):
+            #print("Pushed ENEMY buffer")
+            Enemy_MultiMesh.multimesh.buffer = temp_enemy_mesh_push_buffer
+            
+        #set_boid_transform(ent, new_trans)
             
 
         #$Label3D.transform = get_boid_transform(ent)
