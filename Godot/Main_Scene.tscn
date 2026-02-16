@@ -1,6 +1,8 @@
 [gd_scene format=3 uid="uid://dmnqq8qs43a8"]
 
 [ext_resource type="PackedScene" uid="uid://cdkojrqd5o300" path="res://Player/Player.tscn" id="1_8sucx"]
+[ext_resource type="PackedScene" uid="uid://14ag1dkvekeb" path="res://Art/Planets/Planet-Earthy.tscn" id="2_7fr83"]
+[ext_resource type="PackedScene" uid="uid://c0ygdpy0qlwxa" path="res://Art/Planets/Planet-Moony.tscn" id="3_tkmsp"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_8sucx"]
 sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
@@ -24,3 +26,11 @@ environment = SubResource("Environment_tkmsp")
 
 [node name="Player" parent="." unique_id=1047638996 instance=ExtResource("1_8sucx")]
 current = true
+
+[node name="PlanetEarthy" parent="." unique_id=732950670 instance=ExtResource("2_7fr83")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.841705, 0.9068104, -3.5940328)
+
+[node name="PlanetMoony" parent="." unique_id=1810502287 instance=ExtResource("3_tkmsp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.2535527, 0.46032518, -2.1714435)
+
+[editable path="PlanetMoony"]
