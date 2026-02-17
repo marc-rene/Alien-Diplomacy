@@ -67,13 +67,14 @@ rings = 4
 
 [node name="BoidArenaTest" type="Node3D" unique_id=2127710614 node_paths=PackedStringArray("Friendly_Spawn_Point", "Friendly_Mesh", "Friendly_MultiMesh", "Enemy_Spawn_Point", "Enemy_Mesh", "Enemy_MultiMesh")]
 script = ExtResource("1_yngf2")
-Max_Num_Boids = 20000
+Max_Num_Boids = 7500
 Friendly_Spawn_Point = NodePath("Friendly_Mesh")
 Friendly_Mesh = NodePath("Friendly_Ship2/Friendly Space Fighter")
 Friendly_MultiMesh = NodePath("Friendly_Mesh_MultiManager")
 Enemy_Spawn_Point = NodePath("Enemy_Mesh")
 Enemy_Mesh = NodePath("Enemy_Ship/Enemy Space Fighter")
 Enemy_MultiMesh = NodePath("Enemy_Mesh_MultiManager")
+starting_physics_tick = 10
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1933345420]
 environment = SubResource("Environment_ecogi")
