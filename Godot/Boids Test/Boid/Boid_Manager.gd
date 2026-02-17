@@ -33,10 +33,12 @@ var prev_friend_mesh_push_buffer : PackedFloat32Array
 var prev_enemy_mesh_push_buffer : PackedFloat32Array
 
 @export_category("Performance HELL")
-@export var use_low_performace_hack : bool = true # Do we want to use one buffer? (Smooth) or swap between 2 buffers? (Great performacne, annoying jitter at low fps)
+@export var offbrand_physics_DLSS : bool = true # Do we want to use one buffer? (Smooth) or swap between 2 buffers? (Great performacne, annoying jitter at low fps)
 @export var starting_physics_tick : int = 15 # Do we want to use one buffer? (Smooth) or swap between 2 buffers? (Great performacne, annoying jitter)
 @export var try_hit_60 : bool = false # try and fail to make the FPS keep 60
+@export var Override_Camera : Camera3D
 var use_prev_buffer : bool = true
+
 
 
 
@@ -196,13 +198,14 @@ func _process(delta: float) -> void:
     cam_point = get_boid_transform(max_friendly_count)
     frame_fence += 1
     #$Camera3D.global_position = cam_point.origin - cam_point.basis.z * 3 + cam_point.basis.y * 2  # behind + up
-    $Camera3D.global_position = cam_point.origin - cam_point.basis.z + cam_point.basis.y  # behind + up
-    $Camera3D.look_at(cam_point.origin, Vector3.UP)
-    
-    $Camera3D/Label.text = "FPS: " + str(Engine.get_frames_per_second()) + "\nFriendly Boids: " + str(french-1) + "\nEnemy Boids: " + str(eeees-1) + "\nPhysics FPS: " + str(Engine.physics_ticks_per_second)
-    $Camera3D/Label.text += "\nPhysics Update Tick score: " + str(update_physics_score) + "\nPhysics Frame Fence: " + str(physics_fence) +"/"+ str(int(frames_before_change*update_physics_score)) + "\nPhysics fps next change: " + str(clamp(int(starting_physics_tick * update_physics_score), 1, starting_physics_tick))
-    $Camera3D/Label.text += "\nAwful frame drops: " + str(frame_time_switches)
-    $Camera3D/Label.text += "\nUsing AWFUL boid movement mode???: " + str(use_low_performace_hack)
+    if Override_Camera != null:
+        $Camera3D.global_position = cam_point.origin - cam_point.basis.z + cam_point.basis.y  # behind + up
+        $Camera3D.look_at(cam_point.origin, Vector3.UP)
+        
+        $Camera3D/Label.text = "FPS: " + str(Engine.get_frames_per_second()) + "\nFriendly Boids: " + str(french-1) + "\nEnemy Boids: " + str(eeees-1) + "\nPhysics FPS: " + str(Engine.physics_ticks_per_second)
+        $Camera3D/Label.text += "\nPhysics Update Tick score: " + str(update_physics_score) + "\nPhysics Frame Fence: " + str(physics_fence) +"/"+ str(int(frames_before_change*update_physics_score)) + "\nPhysics fps next change: " + str(clamp(int(starting_physics_tick * update_physics_score), 1, starting_physics_tick))
+        $Camera3D/Label.text += "\nAwful frame drops: " + str(frame_time_switches)
+        $Camera3D/Label.text += "\nUsing Offbrand Physics DLSS?: " + str(offbrand_physics_DLSS)
    
     if try_hit_60: 
         struggling_level = int(Engine.get_frames_per_second() / 10)
@@ -246,13 +249,13 @@ func _process(delta: float) -> void:
         if physics_fence >= (frames_before_change*update_physics_score):
             physics_fence = 0
             
-        if frame_time_switches > 5000 and use_low_performace_hack == false:
+        if frame_time_switches > 5000 and offbrand_physics_DLSS == false:
             printerr("Sorry bud, performance is too jittery no matter what we do, switching to hacky low performance mode")
-            use_low_performace_hack = true
+            offbrand_physics_DLSS = true
             
-        if frame_time_switches < 0 and use_low_performace_hack:
+        if frame_time_switches < 0 and offbrand_physics_DLSS:
             print("performance seems to be better, going back to better boids")
-            use_low_performace_hack = false
+            offbrand_physics_DLSS = false
     
     else: # dont bpther juggling the physics fps
         Engine.max_physics_steps_per_frame = 3
@@ -266,6 +269,7 @@ func _process(delta: float) -> void:
         print("Homies: " + str(Friendly_MultiMesh.multimesh.instance_count) + "\tbuffer size: " + str(Friendly_MultiMesh.multimesh.buffer.size()))
         print("Enemies: " + str(Enemy_MultiMesh.multimesh.instance_count) + "\tbuffer size: " + str(Enemy_MultiMesh.multimesh.buffer.size()))
         print("Total: " + str(ALL_ENTITIES_ent.size()) + "\t Velocities too: " + str(VELOCITIES_comp.size()) )
+        
         $Friend_NamNam.global_position = Vector3(randfn(1.0, max_offset), randfn(1.0, max_offset), randfn(1.0, max_offset))
         friendly_pos = $Friend_NamNam.global_position
         
@@ -412,7 +416,7 @@ func _physics_process(delta: float) -> void:
         new_trans.origin += VELOCITIES_comp[ent] * delta
 
         if ent < max_friendly_count: #is friendlY?
-            if use_prev_buffer or use_low_performace_hack == false:
+            if use_prev_buffer or offbrand_physics_DLSS == false:
                 temp_friend_mesh_push_buffer[(12 * ent) + 0] = new_trans.basis.x.x
                 temp_friend_mesh_push_buffer[(12 * ent) + 1] = new_trans.basis.y.x
                 temp_friend_mesh_push_buffer[(12 * ent) + 2] = new_trans.basis.z.x
@@ -441,7 +445,7 @@ func _physics_process(delta: float) -> void:
         
 
         if ent >= max_friendly_count: #not friendlY?
-            if use_prev_buffer or use_low_performace_hack == false:
+            if use_prev_buffer or offbrand_physics_DLSS == false:
                 temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 0] = new_trans.basis.x.x
                 temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 1] = new_trans.basis.y.x
                 temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 2] = new_trans.basis.z.x
@@ -470,7 +474,7 @@ func _physics_process(delta: float) -> void:
             
         #set_boid_transform(ent, new_trans) # Godot is terrible with CPU -> gpu calls
     
-    if use_low_performace_hack:
+    if offbrand_physics_DLSS:
         if use_prev_buffer:
             Friendly_MultiMesh.multimesh.set_buffer_interpolated(temp_friend_mesh_push_buffer, prev_friend_mesh_push_buffer)
             Enemy_MultiMesh.multimesh.set_buffer_interpolated(temp_enemy_mesh_push_buffer, prev_enemy_mesh_push_buffer)
