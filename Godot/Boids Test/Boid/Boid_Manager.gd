@@ -31,7 +31,6 @@ var temp_friend_mesh_push_buffer : PackedFloat32Array
 var temp_enemy_mesh_push_buffer : PackedFloat32Array
 var prev_friend_mesh_push_buffer : PackedFloat32Array
 var prev_enemy_mesh_push_buffer : PackedFloat32Array
-var boid_thread : Thread # I had no idea GDSCRipt could be so incompetent on multimesh and ECS... but has multithreading???
 
 @export_category("Performance HELL")
 @export var offbrand_physics_DLSS : bool = true # Do we want to use one buffer? (Smooth) or swap between 2 buffers? (Great performacne, annoying jitter at low fps)
@@ -39,8 +38,6 @@ var boid_thread : Thread # I had no idea GDSCRipt could be so incompetent on mul
 @export var try_hit_60 : bool = false # try and fail to make the FPS keep 60
 @export var Override_Camera : Camera3D
 var use_prev_buffer : bool = true
-var boid_buffer_mutex : Mutex
-var boid_buffer_sem : Semaphore
 
 
 
@@ -106,20 +103,22 @@ func _ready():
     
     Friendly_MultiMesh.multimesh.mesh = Friendly_Mesh.mesh
     Enemy_MultiMesh.multimesh.mesh = Enemy_Mesh.mesh
-       
+    
+    #Friendly_MultiMesh.multimesh.transform_format = MultiMesh.TRANSFORM_3D # 3D format
+    #Enemy_MultiMesh.multimesh.transform_format = MultiMesh.TRANSFORM_3D
+    
     Friendly_MultiMesh.multimesh.instance_count = max_friendly_count
     Enemy_MultiMesh.multimesh.instance_count = Max_Num_Boids - max_friendly_count
     
     Friendly_MultiMesh.multimesh.visible_instance_count = max_friendly_count
     Enemy_MultiMesh.multimesh.visible_instance_count = Max_Num_Boids - max_friendly_count
     
+    #for friend in max_friendly_count:
+        #multimesh_mapping[friend] = friend
+    #for enemy in max_enemy_count:
+        #multimesh_mapping[max_friendly_count + enemy] = enemy
     inited = true
 
-    print("Starting Boid sim now")
-    boid_buffer_mutex = Mutex.new()
-    boid_buffer_sem = Semaphore.new()
-    boid_thread = Thread.new()
-    boid_thread.start(boid_tick)
 
 
 
@@ -207,8 +206,6 @@ func _process(delta: float) -> void:
         $Camera3D/Label.text += "\nPhysics Update Tick score: " + str(update_physics_score) + "\nPhysics Frame Fence: " + str(physics_fence) +"/"+ str(int(frames_before_change*update_physics_score)) + "\nPhysics fps next change: " + str(clamp(int(starting_physics_tick * update_physics_score), 1, starting_physics_tick))
         $Camera3D/Label.text += "\nAwful frame drops: " + str(frame_time_switches)
         $Camera3D/Label.text += "\nUsing Offbrand Physics DLSS?: " + str(offbrand_physics_DLSS)
-        $Camera3D/Label.text += "\nBoid Thread FPS: " + str(1 / prev_boid_frame_delta_seconds)
-        
    
     if try_hit_60: 
         struggling_level = int(Engine.get_frames_per_second() / 10)
@@ -282,21 +279,7 @@ func _process(delta: float) -> void:
         #for i in range(Max_Num_Boids / 2):
             #OFFSETS_comp[i * 2 - 1] = OFFSETS_comp[i] * -1.1 
             #OFFSETS_comp[i+1] = OFFSETS_comp[i+1] * 1.01 
-            
-    if boid_buffer_mutex.try_lock():
-        if offbrand_physics_DLSS:
-            if use_prev_buffer:
-                Friendly_MultiMesh.multimesh.set_buffer_interpolated(temp_friend_mesh_push_buffer, prev_friend_mesh_push_buffer)
-                Enemy_MultiMesh.multimesh.set_buffer_interpolated(temp_enemy_mesh_push_buffer, prev_enemy_mesh_push_buffer)
-            else:
-                Friendly_MultiMesh.multimesh.set_buffer_interpolated(prev_friend_mesh_push_buffer, temp_friend_mesh_push_buffer)
-                Enemy_MultiMesh.multimesh.set_buffer_interpolated(prev_enemy_mesh_push_buffer, temp_enemy_mesh_push_buffer)
-            use_prev_buffer = !use_prev_buffer
-        else:
-            Friendly_MultiMesh.multimesh.buffer = temp_friend_mesh_push_buffer
-            Enemy_MultiMesh.multimesh.buffer = temp_enemy_mesh_push_buffer
-        boid_buffer_mutex.unlock()
-        boid_buffer_sem.post()
+
 
 #func make_blurry(target: Vector3, offset:float) -> Vector3:
     #return Vector3(target.x - offset, target.y + offset, target.z + offset)
@@ -325,104 +308,188 @@ var struggling_level : int = 0
 var prev_struggle : int = 999999
 const frames_before_change : int = 100
 var physics_fence : int = 0
-
-var boid_frame_start_Us : int = Time.get_ticks_usec()
-var boid_frame_end_Us : int = Time.get_ticks_usec()
-var prev_boid_frame_delta_Us : int
-var prev_boid_frame_delta_seconds : float
-func boid_tick() -> void:
-    while true:
+func _physics_process(delta: float) -> void:
+    #struggling_level = int(Engine.get_frames_per_second() / 10)
+        #
+    #if (struggling_level <= 2 and physics_fence >= frames_before_change):
+        #Engine.physics_ticks_per_second = clamp(int(starting_physics_tick * 0.1), 1, 100)
+        #physics_fence = 0
+    #elif (struggling_level < 3 and physics_fence >= frames_before_change):
+        #Engine.physics_ticks_per_second = clamp(int(starting_physics_tick * 0.3), 1, 100)
+        #physics_fence = 0
+    #elif (struggling_level < 4 and physics_fence >= frames_before_change):
+        #Engine.physics_ticks_per_second = clamp(int(starting_physics_tick * 0.5), 1, 100)
+        #physics_fence = 0
+    #elif (struggling_level < 5 and physics_fence >= frames_before_change):
+        #Engine.physics_ticks_per_second = clamp(int(starting_physics_tick * 0.7), 1, 100)
+        #physics_fence = 0
+    #elif (struggling_level < 6 and physics_fence >= frames_before_change):
+        #Engine.physics_ticks_per_second = clamp(int(starting_physics_tick * 0.9), 1, 100)
+        #physics_fence = 0
+    #elif physics_fence >= frames_before_change:
+        #Engine.physics_ticks_per_second = starting_physics_tick
+        #physics_fence = 0
         
-        boid_frame_start_Us = Time.get_ticks_usec()
-        physics_fence += 1   
-        #boid_buffer_sem.wait()
-        boid_buffer_mutex.lock()
-        for ent in range(Max_Num_Boids):
-            if inited and is_alive(ent) == false: 
-                continue
-
-            target_pos = friendly_pos if is_friendly(ent) else enemy_pos
-            new_trans = get_boid_transform(ent)
-            
-            to_target = target_pos - new_trans.origin
-            to_target.x += (2.0 / OFFSETS_comp[ent])
-            to_target.y += (2.1 / OFFSETS_comp[ent])
-            to_target.z += (-2.2 / OFFSETS_comp[ent])
-            desried = to_target.normalized() * max_speed # max speed
-            
-            force = desried - VELOCITIES_comp[ent]
-            accel = force / mass # mass = 1
-            prev_boid_frame_delta_seconds = float(prev_boid_frame_delta_Us / 1000000.0)
-            VELOCITIES_comp[ent] += accel * prev_boid_frame_delta_seconds # microsecond to second
-
-            if VELOCITIES_comp[ent].length_squared() > 0.1:
-                temp_up = new_trans.basis.y.lerp((Vector3.UP + accel * banking).normalized(), prev_boid_frame_delta_seconds * 5)
-                new_trans = new_trans.looking_at(new_trans.origin - VELOCITIES_comp[ent], temp_up)
-            new_trans.origin += VELOCITIES_comp[ent] * prev_boid_frame_delta_seconds
+    physics_fence += 1   
     
-            if ent < max_friendly_count: #is friendlY?
-                if use_prev_buffer or offbrand_physics_DLSS == false:
-                    temp_friend_mesh_push_buffer[(12 * ent) + 0] = new_trans.basis.x.x
-                    temp_friend_mesh_push_buffer[(12 * ent) + 1] = new_trans.basis.y.x
-                    temp_friend_mesh_push_buffer[(12 * ent) + 2] = new_trans.basis.z.x
-                    temp_friend_mesh_push_buffer[(12 * ent) + 3] = new_trans.origin.x
-                    temp_friend_mesh_push_buffer[(12 * ent) + 4] = new_trans.basis.x.y
-                    temp_friend_mesh_push_buffer[(12 * ent) + 5] = new_trans.basis.y.y
-                    temp_friend_mesh_push_buffer[(12 * ent) + 6] = new_trans.basis.z.y
-                    temp_friend_mesh_push_buffer[(12 * ent) + 7] = new_trans.origin.y
-                    temp_friend_mesh_push_buffer[(12 * ent) + 8] = new_trans.basis.x.z
-                    temp_friend_mesh_push_buffer[(12 * ent) + 9] = new_trans.basis.y.z
-                    temp_friend_mesh_push_buffer[(12 * ent) + 10] = new_trans.basis.z.z
-                    temp_friend_mesh_push_buffer[(12 * ent) + 11] = new_trans.origin.z
-                else:
-                    prev_friend_mesh_push_buffer[(12 * ent) + 0] = new_trans.basis.x.x
-                    prev_friend_mesh_push_buffer[(12 * ent) + 1] = new_trans.basis.y.x
-                    prev_friend_mesh_push_buffer[(12 * ent) + 2] = new_trans.basis.z.x
-                    prev_friend_mesh_push_buffer[(12 * ent) + 3] = new_trans.origin.x
-                    prev_friend_mesh_push_buffer[(12 * ent) + 4] = new_trans.basis.x.y
-                    prev_friend_mesh_push_buffer[(12 * ent) + 5] = new_trans.basis.y.y
-                    prev_friend_mesh_push_buffer[(12 * ent) + 6] = new_trans.basis.z.y
-                    prev_friend_mesh_push_buffer[(12 * ent) + 7] = new_trans.origin.y
-                    prev_friend_mesh_push_buffer[(12 * ent) + 8] = new_trans.basis.x.z
-                    prev_friend_mesh_push_buffer[(12 * ent) + 9] = new_trans.basis.y.z
-                    prev_friend_mesh_push_buffer[(12 * ent) + 10] = new_trans.basis.z.z
-                    prev_friend_mesh_push_buffer[(12 * ent) + 11] = new_trans.origin.z 
-
-            if ent >= max_friendly_count: #not friendlY?
-                if use_prev_buffer or offbrand_physics_DLSS == false:
-                    temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 0] = new_trans.basis.x.x
-                    temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 1] = new_trans.basis.y.x
-                    temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 2] = new_trans.basis.z.x
-                    temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 3] = new_trans.origin.x
-                    temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 4] = new_trans.basis.x.y
-                    temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 5] = new_trans.basis.y.y
-                    temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 6] = new_trans.basis.z.y
-                    temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 7] = new_trans.origin.y
-                    temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 8] = new_trans.basis.x.z
-                    temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 9] = new_trans.basis.y.z
-                    temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 10] = new_trans.basis.z.z
-                    temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 11] = new_trans.origin.z
-                else:
-                    prev_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 0] = new_trans.basis.x.x
-                    prev_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 1] = new_trans.basis.y.x
-                    prev_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 2] = new_trans.basis.z.x
-                    prev_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 3] = new_trans.origin.x
-                    prev_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 4] = new_trans.basis.x.y
-                    prev_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 5] = new_trans.basis.y.y
-                    prev_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 6] = new_trans.basis.z.y
-                    prev_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 7] = new_trans.origin.y
-                    prev_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 8] = new_trans.basis.x.z
-                    prev_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 9] = new_trans.basis.y.z
-                    prev_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 10] = new_trans.basis.z.z
-                    prev_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 11] = new_trans.origin.z
+    #print("Struggling: " + str(Engine.get_frames_per_second()) + "/ 10 = " + str(struggling_level) + " < " + str(prev_struggle) + "\t\t#" + str(physics_fence))
+    #match struggling_level:
+        #0:
+            #if struggling_level != prev_struggle and physics_fence >= frames_before_change:
+                #prev_struggle = struggling_level
+                #printerr("OH MY SWEET HOVERING JESUS STRUGGLING")
+                #Engine.max_physics_steps_per_frame = 1
+                ##Engine.physics_ticks_per_second = 3
+                #physics_fence = 0
+            #physics_fence += 1
+        #1:
+            #if struggling_level != prev_struggle and physics_fence >= frames_before_change :
+                #prev_struggle = struggling_level
+                #printerr("DAMN STRUGGLING")
+                #Engine.max_physics_steps_per_frame = 1
+                ##Engine.physics_ticks_per_second = 5
+                #physics_fence = 0
+            #physics_fence += 1
+        #2:
+            #if struggling_level != prev_struggle and physics_fence >= frames_before_change :
+                #prev_struggle = struggling_level
+                #printerr("Damn... Kinda struggling")
+                #Engine.max_physics_steps_per_frame = 1
+                #Engine.physics_ticks_per_second = 10
+                #physics_fence = 0
+            #physics_fence += 1
+        #3:
+            #if struggling_level != prev_struggle and physics_fence >= frames_before_change:
+                #prev_struggle = struggling_level
+                #printerr("...This is getting worrying?")
+                #Engine.max_physics_steps_per_frame = 2
+                #Engine.physics_ticks_per_second = 15
+                #physics_fence = 0
+            #physics_fence += 1
+        #4:
+            #if struggling_level != prev_struggle and physics_fence >= frames_before_change:
+                #prev_struggle = struggling_level
+                #printerr("Slowing down a smidge?")
+                #Engine.max_physics_steps_per_frame = 3
+                #Engine.physics_ticks_per_second = 25
+                #physics_fence = 0
+            #physics_fence += 1
+        #_:
+            #if struggling_level != prev_struggle and physics_fence >= frames_before_change:
+                #printerr("looks..... peachy?")
+                #prev_struggle = struggling_level
+                #Engine.max_physics_steps_per_frame = 3
+                #Engine.physics_ticks_per_second = 30
+                #physics_fence = 0
+            #physics_fence += 1
         
-        boid_buffer_mutex.unlock()  
-        boid_frame_end_Us = Time.get_ticks_usec()
-        prev_boid_frame_delta_Us = boid_frame_end_Us - boid_frame_start_Us
+            
+            
+            
+            
+        
+    for ent in range(Max_Num_Boids):
+        if inited and is_alive(ent) == false: 
+            continue
 
+        target_pos = friendly_pos if is_friendly(ent) else enemy_pos
+        new_trans = get_boid_transform(ent)
+        #target_pos.x = randfn(target_pos.x, 1.0)
+        #target_pos.y = randfn(target_pos.y, 1.0)
+        #target_pos.z = randfn(target_pos.z, 1.0)        
+        #var to_target = make_blurry(target_node.global_position, 1.0 / ((ent % 20) + 1)) - get_boid_transform(ent).origin
+        to_target = target_pos - new_trans.origin
+        to_target.x += (2.0 / OFFSETS_comp[ent])
+        to_target.y += (2.1 / OFFSETS_comp[ent])
+        to_target.z += (-2.2 / OFFSETS_comp[ent])
+        desried = to_target.normalized() * max_speed # max speed
+        
+        force = desried - VELOCITIES_comp[ent]
+        #force = calculate_force(ent)
+        accel = force / mass # mass = 1
+        VELOCITIES_comp[ent] += accel * delta
+        #new_trans = get_boid_transform(ent)
 
+        if VELOCITIES_comp[ent].length_squared() > 0.1:
+            temp_up = new_trans.basis.y.lerp((Vector3.UP + accel * banking).normalized(), delta * 5)
+            new_trans = new_trans.looking_at(new_trans.origin - VELOCITIES_comp[ent], temp_up)
+        new_trans.origin += VELOCITIES_comp[ent] * delta
 
+        if ent < max_friendly_count: #is friendlY?
+            if use_prev_buffer or offbrand_physics_DLSS == false:
+                temp_friend_mesh_push_buffer[(12 * ent) + 0] = new_trans.basis.x.x
+                temp_friend_mesh_push_buffer[(12 * ent) + 1] = new_trans.basis.y.x
+                temp_friend_mesh_push_buffer[(12 * ent) + 2] = new_trans.basis.z.x
+                temp_friend_mesh_push_buffer[(12 * ent) + 3] = new_trans.origin.x
+                temp_friend_mesh_push_buffer[(12 * ent) + 4] = new_trans.basis.x.y
+                temp_friend_mesh_push_buffer[(12 * ent) + 5] = new_trans.basis.y.y
+                temp_friend_mesh_push_buffer[(12 * ent) + 6] = new_trans.basis.z.y
+                temp_friend_mesh_push_buffer[(12 * ent) + 7] = new_trans.origin.y
+                temp_friend_mesh_push_buffer[(12 * ent) + 8] = new_trans.basis.x.z
+                temp_friend_mesh_push_buffer[(12 * ent) + 9] = new_trans.basis.y.z
+                temp_friend_mesh_push_buffer[(12 * ent) + 10] = new_trans.basis.z.z
+                temp_friend_mesh_push_buffer[(12 * ent) + 11] = new_trans.origin.z
+            else:
+                prev_friend_mesh_push_buffer[(12 * ent) + 0] = new_trans.basis.x.x
+                prev_friend_mesh_push_buffer[(12 * ent) + 1] = new_trans.basis.y.x
+                prev_friend_mesh_push_buffer[(12 * ent) + 2] = new_trans.basis.z.x
+                prev_friend_mesh_push_buffer[(12 * ent) + 3] = new_trans.origin.x
+                prev_friend_mesh_push_buffer[(12 * ent) + 4] = new_trans.basis.x.y
+                prev_friend_mesh_push_buffer[(12 * ent) + 5] = new_trans.basis.y.y
+                prev_friend_mesh_push_buffer[(12 * ent) + 6] = new_trans.basis.z.y
+                prev_friend_mesh_push_buffer[(12 * ent) + 7] = new_trans.origin.y
+                prev_friend_mesh_push_buffer[(12 * ent) + 8] = new_trans.basis.x.z
+                prev_friend_mesh_push_buffer[(12 * ent) + 9] = new_trans.basis.y.z
+                prev_friend_mesh_push_buffer[(12 * ent) + 10] = new_trans.basis.z.z
+                prev_friend_mesh_push_buffer[(12 * ent) + 11] = new_trans.origin.z
+        
 
+        if ent >= max_friendly_count: #not friendlY?
+            if use_prev_buffer or offbrand_physics_DLSS == false:
+                temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 0] = new_trans.basis.x.x
+                temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 1] = new_trans.basis.y.x
+                temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 2] = new_trans.basis.z.x
+                temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 3] = new_trans.origin.x
+                temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 4] = new_trans.basis.x.y
+                temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 5] = new_trans.basis.y.y
+                temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 6] = new_trans.basis.z.y
+                temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 7] = new_trans.origin.y
+                temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 8] = new_trans.basis.x.z
+                temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 9] = new_trans.basis.y.z
+                temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 10] = new_trans.basis.z.z
+                temp_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 11] = new_trans.origin.z
+            else:
+                prev_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 0] = new_trans.basis.x.x
+                prev_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 1] = new_trans.basis.y.x
+                prev_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 2] = new_trans.basis.z.x
+                prev_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 3] = new_trans.origin.x
+                prev_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 4] = new_trans.basis.x.y
+                prev_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 5] = new_trans.basis.y.y
+                prev_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 6] = new_trans.basis.z.y
+                prev_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 7] = new_trans.origin.y
+                prev_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 8] = new_trans.basis.x.z
+                prev_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 9] = new_trans.basis.y.z
+                prev_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 10] = new_trans.basis.z.z
+                prev_enemy_mesh_push_buffer[(12 * (ent - max_friendly_count)) + 11] = new_trans.origin.z
+            
+        #set_boid_transform(ent, new_trans) # Godot is terrible with CPU -> gpu calls
+    
+    if offbrand_physics_DLSS:
+        if use_prev_buffer:
+            Friendly_MultiMesh.multimesh.set_buffer_interpolated(temp_friend_mesh_push_buffer, prev_friend_mesh_push_buffer)
+            Enemy_MultiMesh.multimesh.set_buffer_interpolated(temp_enemy_mesh_push_buffer, prev_enemy_mesh_push_buffer)
+        else:
+            Friendly_MultiMesh.multimesh.set_buffer_interpolated(prev_friend_mesh_push_buffer, temp_friend_mesh_push_buffer)
+            Enemy_MultiMesh.multimesh.set_buffer_interpolated(prev_enemy_mesh_push_buffer, temp_enemy_mesh_push_buffer)
+        use_prev_buffer = !use_prev_buffer
+    else:
+        Friendly_MultiMesh.multimesh.buffer = temp_friend_mesh_push_buffer
+        Enemy_MultiMesh.multimesh.buffer = temp_enemy_mesh_push_buffer
+
+        #$Label3D.transform = get_boid_transform(ent)
+        #$Label3D.text = str(get_boid_transform(ent))
+        #print("#" + str(ent) + "\n\tPosit: " + str($Label3D.global_position) + "\n\tRotat" + str($Label3D.global_rotation) + "\n\tScale" + str($Label3D.scale) + "\n\tBasis" + str($Label3D.basis) + "\n\tTrans" + str($Label3D.global_transform) )
+    
 
 func set_boid_transform(ship_entity_index : int, new_transform : Transform3D):
     if is_friendly(ship_entity_index):
