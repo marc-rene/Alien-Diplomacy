@@ -11,14 +11,22 @@ config_version=5
 [application]
 
 config/name="Alien Diplomacy"
-run/main_scene="uid://dmnqq8qs43a8"
+run/main_scene="uid://bxkodyr0wi2y0"
 config/features=PackedStringArray("4.6", "Mobile")
-config/icon="res://icon.svg"
+boot_splash/stretch_mode=4
+boot_splash/image="uid://dx1vsgwdjdtiw"
+config/icon="uid://br27nxpqgb23j"
+boot_splash/minimum_display_time=2000
 
 [autoload]
 
 XRToolsUserSettings="*uid://bqgb8i74tm0t"
 XRToolsRumbleManager="*uid://by853dk86g1qw"
+
+[display]
+
+window/size/viewport_width=1600
+window/size/viewport_height=900
 
 [dotnet]
 

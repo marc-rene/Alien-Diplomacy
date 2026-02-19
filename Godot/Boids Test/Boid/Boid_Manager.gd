@@ -1,9 +1,9 @@
 extends Node3D
-class_name  Boid_Manager
+class_name Boid_Manager
 
 # whats the absoilute maximum number of boids we can have??
 #@export_range(2, 200, 1, "prefer_slider") var Max_Num_Boids := 100
-@export_range(2, 20000, 1, "prefer_slider") var Max_Num_Boids := 100
+@export_range(2, 260000, 1, "prefer_slider") var Max_Num_Boids := 100
 
 # How do we want to divide up our friendlies? (Assuming we want 100 boids max)
 #   0.5 == Equal num of Friends V Enemy (50 v 50)
@@ -39,9 +39,16 @@ var prev_enemy_mesh_push_buffer : PackedFloat32Array
 @export var Override_Camera : Camera3D
 var use_prev_buffer : bool = true
 
+static var boid_manager_instance : Boid_Manager
 
+static func Is_Using_Offbrand_Physics_DLSS() -> bool:
+    return boid_manager_instance.offbrand_physics_DLSS
 
+static func How_Many_Boids() -> int:
+    return boid_manager_instance.Max_Num_Boids
 
+static func How_Many_Boids_Active() -> int:
+    return boid_manager_instance.eeees + boid_manager_instance.french
 
 # SO here's the naming convention
 # Entities will end in _ent
@@ -65,27 +72,14 @@ var OFFSETS_comp : PackedByteArray
 var VELOCITIES_comp : PackedVector3Array
 
 
-
-
-var inited := false
-func _ready():
-    if Friendly_Spawn_Point == null or Friendly_Mesh == null or Friendly_MultiMesh == null or Enemy_Spawn_Point == null or Enemy_Mesh == null  or Enemy_MultiMesh == null:
-        printerr("Yo aint said what yo homies or estonies is!!!")
-        set_physics_process(false)
-        return 
-        
-    Engine.physics_ticks_per_second = starting_physics_tick
-    
-    ALL_ENTITIES_ent = PackedByteArray()
+func Refresh_Entities():
+    inited = false
     ALL_ENTITIES_ent.resize(Max_Num_Boids)
     ALL_ENTITIES_ent.fill(0)    # You're all deactivated!
     
-    VELOCITIES_comp = PackedVector3Array()
     VELOCITIES_comp.resize(Max_Num_Boids)
     VELOCITIES_comp.fill(Vector3.ZERO)
     
-    
-    OFFSETS_comp = PackedByteArray()
     OFFSETS_comp.resize(Max_Num_Boids)
     for i in range(Max_Num_Boids):
         OFFSETS_comp.encode_s8(i, randi_range(-100, 100))
@@ -98,7 +92,7 @@ func _ready():
     prev_friend_mesh_push_buffer.resize(max_friendly_count * 12)
     temp_enemy_mesh_push_buffer.resize((Max_Num_Boids - max_friendly_count) * 12)
     prev_enemy_mesh_push_buffer.resize((Max_Num_Boids - max_friendly_count) * 12)
-    
+
     print("Max num of boids: %d\n\tFriendly boids: %d\n\tEnemy boids: %d" % [ALL_ENTITIES_ent.size(), max_friendly_count, Max_Num_Boids - max_friendly_count])
     
     Friendly_MultiMesh.multimesh.mesh = Friendly_Mesh.mesh
@@ -113,17 +107,43 @@ func _ready():
     Friendly_MultiMesh.multimesh.visible_instance_count = max_friendly_count
     Enemy_MultiMesh.multimesh.visible_instance_count = Max_Num_Boids - max_friendly_count
     
-    #for friend in max_friendly_count:
-        #multimesh_mapping[friend] = friend
-    #for enemy in max_enemy_count:
-        #multimesh_mapping[max_friendly_count + enemy] = enemy
+    keep_spawning_f = true
+    keep_spawning_e = true
     inited = true
+
+var inited := false
+func _ready():
+    if Friendly_Spawn_Point == null or Friendly_Mesh == null or Friendly_MultiMesh == null or Enemy_Spawn_Point == null or Enemy_Mesh == null  or Enemy_MultiMesh == null:
+        printerr("Yo aint said what yo homies or estonies is!!!")
+        set_physics_process(false)
+        return 
+        
+    boid_manager_instance = self
+    Engine.physics_ticks_per_second = starting_physics_tick
+    
+    ALL_ENTITIES_ent = PackedByteArray()
+    
+    VELOCITIES_comp = PackedVector3Array()
+    
+    OFFSETS_comp = PackedByteArray()
+
+    Refresh_Entities()
+    
+    
+    
+    
+
 
 
 
 
 func is_alive(entity_index: int) -> bool:
-    return ALL_ENTITIES_ent[entity_index] != 0
+    if entity_index < ALL_ENTITIES_ent.size():
+        return ALL_ENTITIES_ent[entity_index] != 0
+    else:
+        printerr("OH CRAP! Our entities are too small, we gotta resize!")
+        Refresh_Entities()
+        return false
 
 
 func is_friendly(entity_index: int) -> bool:
@@ -137,12 +157,9 @@ func is_enemy(entity_index: int) -> bool:
 
 
 func get_boid_transform(entity_index: int) -> Transform3D:
-    #if is_alive(entity_index) == false:
-        #return Transform3D.IDENTITY
+    if is_alive(entity_index) == false:
+        return Transform3D.IDENTITY
     
-    # multimesh buffer is a 4*3 matrix
-    #var temp_trans := Transform3D(Vector3.ZERO, Vector3.ZERO, Vector3.ZERO, Vector3.ZERO)
-
     if is_friendly(entity_index):
         return Friendly_MultiMesh.multimesh.get_instance_transform(entity_index)
     else:
@@ -226,17 +243,17 @@ func _process(delta: float) -> void:
             frame_time_switches += 1 
         elif (struggling_level < 4 ):
             Engine.max_physics_steps_per_frame = 2
-            update_physics_score += 0.00001
+            update_physics_score += 0.0001
             frame_time_switches -= 1
         elif (struggling_level < 5 ):
             Engine.max_physics_steps_per_frame = 3
-            update_physics_score += 0.00003
+            update_physics_score += 0.0003
             frame_time_switches -= 2
         elif (struggling_level < 7 ):
-            update_physics_score += 0.0001
+            update_physics_score += 0.001
             frame_time_switches -= 3
         else:
-            update_physics_score += 0.0005
+            update_physics_score += 0.005
             frame_time_switches -= int(1 * Engine.physics_ticks_per_second)
 
         frame_time_switches = clamp(frame_time_switches, -10000, 10000)
@@ -505,7 +522,6 @@ func spawn_ship(force_spawn : bool, p_is_friendly : bool) -> bool:
         free_index = ALL_ENTITIES_ent.find(0) # any dead decatived boids?
         if is_enemy(free_index): # Only enemy spots are free
             free_index = -1
-    
     else:
         free_index = ALL_ENTITIES_ent.find(0, max_friendly_count) # any dead decatived enemy boids?     
         

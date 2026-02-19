@@ -52,7 +52,17 @@ text = "Left"
 font_size = 10
 outline_size = 0
 
-[node name="L_HandModifier" type="XRHandModifier3D" parent="LeftHand_root/L_HandMesh/LeftHandHumanoid/Skeleton3D" parent_id_path=PackedInt32Array(1729837133, 1561338052) index="3" unique_id=464049382]
+[node name="Physics_Label" type="Label3D" parent="LeftHand_root/L_HandMesh/LeftHandHumanoid/Skeleton3D" parent_id_path=PackedInt32Array(1729837133, 1561338052) index="3" unique_id=482003882]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.08, 0)
+billboard = 1
+alpha_cut = 1
+texture_filter = 0
+text = "Right"
+font_size = 10
+outline_size = 0
+
+[node name="L_HandModifier" type="XRHandModifier3D" parent="LeftHand_root/L_HandMesh/LeftHandHumanoid/Skeleton3D" parent_id_path=PackedInt32Array(1729837133, 1561338052) index="4" unique_id=464049382]
 
 [node name="RightHand_root" type="XRController3D" parent="." unique_id=1168604442]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0)
@@ -85,7 +95,17 @@ text = "Right"
 font_size = 10
 outline_size = 0
 
-[node name="R_HandModifier" type="XRHandModifier3D" parent="RightHand_root/R_HandMesh/RightHandHumanoid/Skeleton3D" parent_id_path=PackedInt32Array(313951395, 1517576376) index="3" unique_id=1460631953]
+[node name="FPS_Label" type="Label3D" parent="RightHand_root/R_HandMesh/RightHandHumanoid/Skeleton3D" parent_id_path=PackedInt32Array(313951395, 1517576376) index="3" unique_id=2018616087]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.08013052, 0)
+billboard = 1
+alpha_cut = 1
+texture_filter = 0
+text = "Right"
+font_size = 10
+outline_size = 0
+
+[node name="R_HandModifier" type="XRHandModifier3D" parent="RightHand_root/R_HandMesh/RightHandHumanoid/Skeleton3D" parent_id_path=PackedInt32Array(313951395, 1517576376) index="4" unique_id=1460631953]
 hand_tracker = &"/user/hand_tracker/right"
 
 [editable path="LeftHand_root/L_HandMesh"]

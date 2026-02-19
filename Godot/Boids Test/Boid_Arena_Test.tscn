@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://cwmheclul04bv" path="res://Boids Test/Boid/Boid_Manager.gd" id="1_yngf2"]
 [ext_resource type="PackedScene" uid="uid://bnmk3q8jripxr" path="res://Art/Ships/Friendly_Ship.glb" id="2_dl8ov"]
 [ext_resource type="PackedScene" uid="uid://b7yyvvp7g02hq" path="res://Art/Ships/Enemy_Ship.glb" id="3_6wfik"]
+[ext_resource type="PackedScene" uid="uid://cdkojrqd5o300" path="res://Player/Player.tscn" id="4_6wfik"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_dl8ov"]
 sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
@@ -64,16 +65,19 @@ height = 0.5
 radial_segments = 4
 rings = 4
 
-[node name="BoidArenaTest" type="Node3D" unique_id=2127710614 node_paths=PackedStringArray("Friendly_Spawn_Point", "Friendly_Mesh", "Friendly_MultiMesh", "Enemy_Spawn_Point", "Enemy_Mesh", "Enemy_MultiMesh", "Override_Camera")]
+[node name="BoidArenaTest" type="Node3D" unique_id=2127710614 node_paths=PackedStringArray("Friendly_Spawn_Point", "Friendly_Mesh", "Friendly_MultiMesh", "Enemy_Spawn_Point", "Enemy_Mesh", "Enemy_MultiMesh")]
 script = ExtResource("1_yngf2")
-Max_Num_Boids = 8000
+Max_Num_Boids = 10000
 Friendly_Spawn_Point = NodePath("Friendly_Mesh")
 Friendly_Mesh = NodePath("Friendly_Ship/Friendly Space Fighter")
 Friendly_MultiMesh = NodePath("Friendly_Mesh_MultiManager")
 Enemy_Spawn_Point = NodePath("Enemy_Mesh")
 Enemy_Mesh = NodePath("Enemy_Ship/Enemy Space Fighter")
 Enemy_MultiMesh = NodePath("Enemy_Mesh_MultiManager")
-Override_Camera = NodePath("Camera3D")
+max_speed = 10.0
+banking = 0.8
+mass = 8.0
+starting_physics_tick = 1
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1933345420]
 environment = SubResource("Environment_ecogi")
@@ -159,6 +163,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6256354, 0, -1.9138678)
 
 [node name="Enemy_Ship" parent="." unique_id=1719176744 instance=ExtResource("3_6wfik")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.2336822, 0, -0.94770336)
+
+[node name="Player" parent="." unique_id=1047638996 instance=ExtResource("4_6wfik")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.906377, 0, 0.18464231)
 
 [editable path="Friendly_Ship"]
 [editable path="Enemy_Ship"]

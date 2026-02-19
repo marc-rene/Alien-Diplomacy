@@ -47,6 +47,10 @@ func _ready():
     %R_HandPoseDetector.pose_ended.connect(_on_hand_pose_detector_pose_ended_R)
 
 
+func _process(delta: float) -> void:
+    %Physics_Label.text = "Physics HZ: " + str(Engine.physics_ticks_per_second) + "\nBoid DLSS: " + str(Boid_Manager.Is_Using_Offbrand_Physics_DLSS())
+    %FPS_Label.text = "FPS: " + str(Engine.get_frames_per_second())
+
 func pose_change(pose_name : String, started : bool):
     match pose_name:
         "ThumbsUp":
