@@ -91,23 +91,6 @@ and using LLM, the commander can either be:
 
   
 
-## Built with
-
-  
-
-| Area | Tech |
-
-|------|------|
-
-| **Engine** | [Godot 4.6](https://godotengine.org/) (Mobile renderer, D3D12 on Windows) |
-
-| **VR / XR** | [OpenXR](https://www.khronos.org/openxr/) · [godot-xr-tools](https://github.com/GodotVR/godot-xr-tools) · **Meta Quest 3S** (hand tracking, passthrough) |
-
-| **LLM** | [NobodyWho](https://github.com/nobodywho-ooo/nobodywho) · [Gemma 2 2B](https://huggingface.co/bartowski/gemma-2-2b-it-GGUF) · [USER-bge-m3](https://huggingface.co/alela32/USER-bge-m3-Q8_0-GGUF) |
-
-| **Setup** | Python 3 · parallel downloads · Windows batch + cross‑platform script |
-
-  
 
 ### Highlights
 
