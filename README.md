@@ -3,7 +3,7 @@
 
 # Alien Diplomacy
 
-  
+![alt text](Godot/Art/Logo/T_AlienDiplomacySpash.svg "Alien Diplomacy Logo")
 
 **VR space strategy meets AI diplomacy** — fight massive boid swarms or talk your way out. Built for **Godot 4.6** with **OpenXR** (Meta Quest 3S) and **local LLM** dialogue.
 
@@ -128,7 +128,12 @@ That let's us reach **~210,000 boids** on an average PC and **~10,000** on the M
 
 Physics tick rate and an optional double-buffer mode ("offbrand physics DLSS") are exposed so you can get extra smoothness on MultiMesh3D updating.
 
-  
+
+![alt text](Assets/AA_SC_(2).png "Boids screenshot 1")
+![alt text](Assets/AA_SC_(3).png "Boids screenshot 2")
+![alt text](Assets/AA_SC_(4).png "Boids screenshot 3")
+![alt text](Assets/AA_SC_(5).png "Boids screenshot 4")
+
 
 ### Factions
 
