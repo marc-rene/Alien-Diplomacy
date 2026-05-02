@@ -76,10 +76,10 @@ static var boid_manager_instance : Boid_Manager
 static func Is_Using_Offbrand_Physics_DLSS() -> bool:                                                                                   	return boid_manager_instance.offbrand_physics_DLSS
 
 static func How_Many_Boids() -> int:
-	return boid_manager_instance.Max_Num_Boids
+    return boid_manager_instance.Max_Num_Boids
 
 static func How_Many_Boids_Active() -> int:
-	return boid_manager_instance.eeees + boid_manager_instance.french
+    return boid_manager_instance.eeees + boid_manager_instance.french
 
 # SO here's the naming convention
 # Entities will end in _ent
@@ -328,7 +328,7 @@ func is_friendly(entity_index: int) -> bool:
 
 
 func is_enemy(entity_index: int) -> bool:
-	return entity_index >= max_friendly_count
+    return entity_index >= max_friendly_count
 
 
 func get_boid_transform(entity_index: int) -> Transform3D:

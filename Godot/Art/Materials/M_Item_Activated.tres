@@ -1,0 +1,13 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://c5l6f2ahie2ih"]
+
+[resource]
+blend_mode = 4
+cull_mode = 2
+shading_mode = 0
+specular_mode = 1
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.88123167, 0.95313305, 0.28538954, 1)
+disable_receive_shadows = true
+grow = true
+grow_amount = 0.002
+proximity_fade_enabled = true
