@@ -15,10 +15,10 @@ signal NONE_signal(started: bool)
 
 func _ready() -> void:
     # XR is initialised by the scene's main.gd — Player only wires up hand tracking
-    %L_HandPoseDetector.pose_started.connect(_on_hand_pose_detector_pose_started_L)
-    %L_HandPoseDetector.pose_ended.connect(_on_hand_pose_detector_pose_ended_L)
-    %R_HandPoseDetector.pose_started.connect(_on_hand_pose_detector_pose_started_R)
-    %R_HandPoseDetector.pose_ended.connect(_on_hand_pose_detector_pose_ended_R)
+    %HandPoseDetector_LEFT.pose_started.connect(_on_hand_pose_detector_pose_started_L)
+    %HandPoseDetector_LEFT.pose_ended.connect(_on_hand_pose_detector_pose_ended_L)
+    %HandPoseDetector_RIGHT.pose_started.connect(_on_hand_pose_detector_pose_started_R)
+    %HandPoseDetector_RIGHT.pose_ended.connect(_on_hand_pose_detector_pose_ended_R)
 
 
 func _process(_delta: float) -> void:
@@ -52,17 +52,17 @@ func pose_change(pose_name : String, started : bool):
 
 func _on_hand_pose_detector_pose_started_L(p_name: String) -> void:
     pose_change(p_name, true)
-    %L_Label.text = p_name
+    %Left_Label3D.text = p_name
     
 func _on_hand_pose_detector_pose_ended_L(p_name: String) -> void:
     pose_change(p_name, false)
-    %L_Label.text = "L-Hand"
+    %Left_Label3D.text = "L-Hand"
 
 
 func _on_hand_pose_detector_pose_started_R(p_name: String) -> void:
     pose_change(p_name, true)
-    %R_Label.text = p_name
+    %Right_Label3D.text = p_name
 
 func _on_hand_pose_detector_pose_ended_R(p_name: String) -> void:
     pose_change(p_name, false)
-    %R_Label.text = "R-Hand"
+    %Right_Label3D.text = "R-Hand"

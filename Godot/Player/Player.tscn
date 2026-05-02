@@ -1,12 +1,12 @@
 [gd_scene format=3 uid="uid://cdkojrqd5o300"]
 
 [ext_resource type="PackedScene" uid="uid://btknduttnmoxf" path="res://addons/godot-xr-tools/misc/vr_common_shader_cache.tscn" id="1_3qydi"]
-[ext_resource type="Script" uid="uid://c6jbwcmuxwbi" path="res://Player/Player.gd" id="1_6ysni"]
 [ext_resource type="PackedScene" uid="uid://df5hynbooj1uj" path="res://addons/hand_pose_detector/hand_pose_detector.tscn" id="2_tok1r"]
 [ext_resource type="Resource" uid="uid://ckjd0xa2a240p" path="res://addons/hand_pose_detector/poses/standard_pose_set.tres" id="3_ddoul"]
 [ext_resource type="PackedScene" uid="uid://cjcehqrfoxav3" path="res://addons/hand_pose_detector/hands/LeftHandHumanoid.gltf" id="4_8g4oa"]
 [ext_resource type="PackedScene" uid="uid://dabmoo0spa6vg" path="res://addons/hand_pose_detector/hands/RightHandHumanoid.gltf" id="5_6ysni"]
 [ext_resource type="Script" uid="uid://dr2qvvt63f8sj" path="res://Player/Player_Finger.gd" id="6_vlldt"]
+[ext_resource type="PackedScene" uid="uid://diyu06cw06syv" path="res://addons/godot-xr-tools/player/player_body.tscn" id="7_vlldt"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_6ysni"]
 margin = 0.02
@@ -19,8 +19,7 @@ height = 0.03
 radial_segments = 8
 rings = 1
 
-[node name="Player" type="XROrigin3D" unique_id=1047638996]
-script = ExtResource("1_6ysni")
+[node name="XROrigin3D" type="XROrigin3D" unique_id=1047638996]
 
 [node name="XRCamera3D" type="XRCamera3D" parent="." unique_id=695216340]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
@@ -31,17 +30,20 @@ current = true
 [node name="AudioListener3D" type="AudioListener3D" parent="XRCamera3D" unique_id=931319641]
 current = true
 
-[node name="LeftHand_root" type="XRController3D" parent="." unique_id=202431219]
+[node name="XR_LeftHand" type="XRController3D" parent="." unique_id=202431219]
+unique_name_in_owner = true
+process_mode = 3
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, 0)
 tracker = &"/user/hand_tracker/left"
+show_when_tracked = true
 
-[node name="L_HandPoseDetector" parent="LeftHand_root" unique_id=470773631 instance=ExtResource("2_tok1r")]
+[node name="HandPoseDetector_LEFT" parent="XR_LeftHand" unique_id=470773631 instance=ExtResource("2_tok1r")]
 unique_name_in_owner = true
 hand_pose_set = ExtResource("3_ddoul")
 
-[node name="L_HandMesh" parent="LeftHand_root" unique_id=1729837133 instance=ExtResource("4_8g4oa")]
+[node name="LeftHandMesh" parent="XR_LeftHand" unique_id=1729837133 instance=ExtResource("4_8g4oa")]
 
-[node name="L_Label" type="Label3D" parent="LeftHand_root/L_HandMesh/LeftHandHumanoid/Skeleton3D" parent_id_path=PackedInt32Array(1729837133, 2048041545) index="0" unique_id=626712409]
+[node name="Left_Label3D" type="Label3D" parent="XR_LeftHand/LeftHandMesh/LeftHandHumanoid/Skeleton3D" parent_id_path=PackedInt32Array(1729837133, 2048041545) index="0" unique_id=626712409]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.15, 0)
 billboard = 1
@@ -51,7 +53,7 @@ text = "Left"
 font_size = 10
 outline_size = 0
 
-[node name="Physics_Label" type="Label3D" parent="LeftHand_root/L_HandMesh/LeftHandHumanoid/Skeleton3D" parent_id_path=PackedInt32Array(1729837133, 2048041545) index="1" unique_id=482003882]
+[node name="Physics_Label" type="Label3D" parent="XR_LeftHand/LeftHandMesh/LeftHandHumanoid/Skeleton3D" parent_id_path=PackedInt32Array(1729837133, 2048041545) index="1" unique_id=482003882]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.08, 0)
 billboard = 1
@@ -61,55 +63,41 @@ text = "Right"
 font_size = 10
 outline_size = 0
 
-[node name="L_HandModifier" type="XRHandModifier3D" parent="LeftHand_root/L_HandMesh/LeftHandHumanoid/Skeleton3D" parent_id_path=PackedInt32Array(1729837133, 2048041545) index="3" unique_id=464049382]
+[node name="XRHandModifier3D" type="XRHandModifier3D" parent="XR_LeftHand/LeftHandMesh/LeftHandHumanoid/Skeleton3D" parent_id_path=PackedInt32Array(1729837133, 2048041545) index="3" unique_id=464049382]
 
-[node name="L_FingerAttach" type="BoneAttachment3D" parent="LeftHand_root/L_HandMesh/LeftHandHumanoid/Skeleton3D" parent_id_path=PackedInt32Array(1729837133, 2048041545) index="4" unique_id=1292331082]
+[node name="Left_Index_Finger" type="BoneAttachment3D" parent="XR_LeftHand/LeftHandMesh/LeftHandHumanoid/Skeleton3D" parent_id_path=PackedInt32Array(1729837133, 2048041545) index="4" unique_id=1292331082]
 transform = Transform3D(0.051258016, 0.1878995, 0.9808498, -0.9749955, 0.22206397, 0.008411678, -0.21623076, -0.9567551, 0.19458377, -0.016196424, 0.036920153, -0.14566463)
 bone_name = "LeftIndexDistal"
 bone_idx = 8
 
-[node name="FingerPivot" type="Node3D" parent="LeftHand_root/L_HandMesh/LeftHandHumanoid/Skeleton3D/L_FingerAttach" unique_id=1606794207]
+[node name="FingerPivot" type="Node3D" parent="XR_LeftHand/LeftHandMesh/LeftHandHumanoid/Skeleton3D/Left_Index_Finger" unique_id=1606794207]
 
-[node name="L_Area3D" type="Area3D" parent="LeftHand_root/L_HandMesh/LeftHandHumanoid/Skeleton3D/L_FingerAttach/FingerPivot" unique_id=2043045115]
+[node name="Left_IndexFinger" type="Area3D" parent="XR_LeftHand/LeftHandMesh/LeftHandHumanoid/Skeleton3D/Left_Index_Finger/FingerPivot" unique_id=2043045115]
+process_mode = 3
 transform = Transform3D(1, 0, 0, 0, 1, -2.9802322e-08, 0, 0, 1, 0, 0.015, 0)
 script = ExtResource("6_vlldt")
+Which_Finger = 1
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="LeftHand_root/L_HandMesh/LeftHandHumanoid/Skeleton3D/L_FingerAttach/FingerPivot/L_Area3D" unique_id=777581992]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="XR_LeftHand/LeftHandMesh/LeftHandHumanoid/Skeleton3D/Left_Index_Finger/FingerPivot/Left_IndexFinger" unique_id=777581992]
 shape = SubResource("CapsuleShape3D_6ysni")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="LeftHand_root/L_HandMesh/LeftHandHumanoid/Skeleton3D/L_FingerAttach/FingerPivot/L_Area3D" unique_id=831500428]
+[node name="LeftHandMesh" type="MeshInstance3D" parent="XR_LeftHand/LeftHandMesh/LeftHandHumanoid/Skeleton3D/Left_Index_Finger/FingerPivot/Left_IndexFinger" unique_id=831500428]
+unique_name_in_owner = true
 mesh = SubResource("CapsuleMesh_vlldt")
 
-[node name="RightHand_root" type="XRController3D" parent="." unique_id=1168604442]
+[node name="XR_RightHand" type="XRController3D" parent="." unique_id=1168604442]
+unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0)
 tracker = &"/user/hand_tracker/right"
 
-[node name="R_HandPoseDetector" parent="RightHand_root" unique_id=1412996390 instance=ExtResource("2_tok1r")]
+[node name="HandPoseDetector_RIGHT" parent="XR_RightHand" unique_id=1412996390 instance=ExtResource("2_tok1r")]
 unique_name_in_owner = true
 hand_tracker_name = "/user/hand_tracker/right"
 hand_pose_set = ExtResource("3_ddoul")
 
-[node name="R_HandMesh" parent="RightHand_root" unique_id=313951395 instance=ExtResource("5_6ysni")]
+[node name="RightHandMesh" parent="XR_RightHand" unique_id=313951395 instance=ExtResource("5_6ysni")]
 
-[node name="R_FingerAttach" type="BoneAttachment3D" parent="RightHand_root/R_HandMesh/RightHandHumanoid/Skeleton3D" parent_id_path=PackedInt32Array(313951395, 1433918233) index="0" unique_id=1083810068]
-transform = Transform3D(0.051410556, -0.18790838, -0.9808402, 0.97499365, 0.22206675, 0.008560741, 0.21620327, -0.9567527, 0.19462611, 0.016196424, 0.036920153, -0.14566463)
-bone_name = "RightIndexDistal"
-bone_idx = 8
-
-[node name="FingerPivot" type="Node3D" parent="RightHand_root/R_HandMesh/RightHandHumanoid/Skeleton3D/R_FingerAttach" unique_id=1463646894]
-
-[node name="R_Area3D" type="Area3D" parent="RightHand_root/R_HandMesh/RightHandHumanoid/Skeleton3D/R_FingerAttach/FingerPivot" unique_id=1397588377]
-transform = Transform3D(1, 0, 0, 0, 1, -2.9802322e-08, 0, 0, 1, 0, 0.015, 0)
-script = ExtResource("6_vlldt")
-is_right_hand = true
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="RightHand_root/R_HandMesh/RightHandHumanoid/Skeleton3D/R_FingerAttach/FingerPivot/R_Area3D" unique_id=196430976]
-shape = SubResource("CapsuleShape3D_6ysni")
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="RightHand_root/R_HandMesh/RightHandHumanoid/Skeleton3D/R_FingerAttach/FingerPivot/R_Area3D" unique_id=1580190510]
-mesh = SubResource("CapsuleMesh_vlldt")
-
-[node name="R_Label" type="Label3D" parent="RightHand_root/R_HandMesh/RightHandHumanoid/Skeleton3D" parent_id_path=PackedInt32Array(313951395, 1433918233) index="2" unique_id=460130050]
+[node name="Right_Label3D" type="Label3D" parent="XR_RightHand/RightHandMesh/RightHandHumanoid/Skeleton3D" parent_id_path=PackedInt32Array(313951395, 1433918233) index="0" unique_id=460130050]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.15, 0)
 billboard = 1
@@ -119,7 +107,7 @@ text = "Right"
 font_size = 10
 outline_size = 0
 
-[node name="FPS_Label" type="Label3D" parent="RightHand_root/R_HandMesh/RightHandHumanoid/Skeleton3D" parent_id_path=PackedInt32Array(313951395, 1433918233) index="3" unique_id=2018616087]
+[node name="FPS_Label" type="Label3D" parent="XR_RightHand/RightHandMesh/RightHandHumanoid/Skeleton3D" parent_id_path=PackedInt32Array(313951395, 1433918233) index="2" unique_id=2018616087]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.08013052, 0)
 billboard = 1
@@ -129,8 +117,33 @@ text = "Right"
 font_size = 10
 outline_size = 0
 
-[node name="R_HandModifier" type="XRHandModifier3D" parent="RightHand_root/R_HandMesh/RightHandHumanoid/Skeleton3D" parent_id_path=PackedInt32Array(313951395, 1433918233) index="4" unique_id=1460631953]
+[node name="R_HandModifier" type="XRHandModifier3D" parent="XR_RightHand/RightHandMesh/RightHandHumanoid/Skeleton3D" parent_id_path=PackedInt32Array(313951395, 1433918233) index="3" unique_id=1460631953]
 hand_tracker = &"/user/hand_tracker/right"
 
-[editable path="LeftHand_root/L_HandMesh"]
-[editable path="RightHand_root/R_HandMesh"]
+[node name="Right_Index_Finger" type="BoneAttachment3D" parent="XR_RightHand/RightHandMesh/RightHandHumanoid/Skeleton3D" parent_id_path=PackedInt32Array(313951395, 1433918233) index="4" unique_id=1083810068]
+transform = Transform3D(0.051410556, -0.18790838, -0.9808402, 0.97499365, 0.22206675, 0.008560741, 0.21620327, -0.9567527, 0.19462611, 0.016196424, 0.036920153, -0.14566463)
+bone_name = "RightIndexDistal"
+bone_idx = 8
+
+[node name="FingerPivot" type="Node3D" parent="XR_RightHand/RightHandMesh/RightHandHumanoid/Skeleton3D/Right_Index_Finger" unique_id=1463646894]
+
+[node name="Right_Index_Finger" type="Area3D" parent="XR_RightHand/RightHandMesh/RightHandHumanoid/Skeleton3D/Right_Index_Finger/FingerPivot" unique_id=1397588377]
+transform = Transform3D(1, 0, 0, 0, 1, -2.9802322e-08, 0, 0, 1, 0, 0.015, 0)
+script = ExtResource("6_vlldt")
+Which_Finger = 1
+is_right_hand = true
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="XR_RightHand/RightHandMesh/RightHandHumanoid/Skeleton3D/Right_Index_Finger/FingerPivot/Right_Index_Finger" unique_id=196430976]
+shape = SubResource("CapsuleShape3D_6ysni")
+
+[node name="RightHandMesh" type="MeshInstance3D" parent="XR_RightHand/RightHandMesh/RightHandHumanoid/Skeleton3D/Right_Index_Finger/FingerPivot/Right_Index_Finger" unique_id=1580190510]
+mesh = SubResource("CapsuleMesh_vlldt")
+
+[node name="PlayerBody" parent="." unique_id=1664725793 instance=ExtResource("7_vlldt")]
+enabled = false
+push_rigid_bodies = false
+
+[node name="OpenXRFbSceneManager" type="OpenXRFbSceneManager" parent="." unique_id=1530437949]
+
+[editable path="XR_LeftHand/LeftHandMesh"]
+[editable path="XR_RightHand/RightHandMesh"]

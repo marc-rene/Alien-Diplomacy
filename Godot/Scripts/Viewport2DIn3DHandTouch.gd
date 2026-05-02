@@ -4,7 +4,10 @@ class_name Viewport2DIn3DHandTouch
 ## Adds physical hand/finger interaction to `XRToolsViewport2DIn3D`.
 ## Converts finger overlap into viewport clicks and optional gesture scrolling.
 
-@export_flags_3d_physics var hand_collision_mask: int = 1
+@export_flags_3d_physics var hand_collision_mask: int = 131073
+@export var fallback_proximity_touch_enabled: bool = true
+@export var fallback_touch_depth: float = 0.03
+@export var fallback_candidate_refresh_seconds: float = 1.0
 
 ## Minimum time between accepted clicks per finger collider.
 @export var click_cooldown_seconds: float = 0.25
@@ -24,6 +27,8 @@ var _viewport: SubViewport
 var _screen_body: Node  # StaticBody3D with viewport_2d_in_3d_body.gd (has global_to_viewport)
 var _touch_area: Area3D
 var _cooldown_by_area: Dictionary = {}  # area -> cooldown end time
+var _fallback_candidates: Array[Area3D] = []
+var _fallback_refresh_timer: float = 0.0
 
 ## Double-click state used when long-press is enabled.
 var _pending_tap_area: Area3D = null
@@ -59,14 +64,15 @@ func _ready() -> void:
         return
 
     _setup_touch_area(viewport_2d_to_3d)
+    set_physics_process(fallback_proximity_touch_enabled)
 
 
 func _setup_touch_area(viewport_2d_to_3d: XRToolsViewport2DIn3D) -> void:
     _touch_area = Area3D.new()
     _touch_area.name = "HandTouchArea"
-    _touch_area.collision_layer = 0
+    _touch_area.collision_layer = 1
     _touch_area.collision_mask = hand_collision_mask
-    _touch_area.monitorable = false
+    _touch_area.monitorable = true
     _touch_area.monitoring = true
 
     var shape : BoxShape3D = BoxShape3D.new()
@@ -96,6 +102,86 @@ func _setup_touch_area(viewport_2d_to_3d: XRToolsViewport2DIn3D) -> void:
         set_process(true)
 
 
+func _physics_process(delta: float) -> void:
+    if not fallback_proximity_touch_enabled:
+        return
+    if not is_instance_valid(_viewport) or _screen_body == null or not _screen_body.has_method("global_to_viewport"):
+        return
+    var parent: Node = get_parent()
+    if not parent is XRToolsViewport2DIn3D or not parent.enabled:
+        return
+
+    _fallback_refresh_timer -= delta
+    if _fallback_refresh_timer <= 0.0:
+        _refresh_fallback_candidates()
+        _fallback_refresh_timer = fallback_candidate_refresh_seconds
+
+    for i in range(_fallback_candidates.size()):
+        var candidate: Area3D = _fallback_candidates[i]
+        if not is_instance_valid(candidate):
+            continue
+        if not _is_supported_touch_area(candidate):
+            continue
+        if not _is_area_near_touch_surface(candidate):
+            continue
+        _trigger_touch_click(candidate)
+
+
+func _is_supported_touch_area(area: Area3D) -> bool:
+    if area is Player_Finger:
+        return true
+    var area_name: String = area.name.to_lower()
+    if area_name.contains("finger"):
+        return true
+    return false
+
+
+func _refresh_fallback_candidates() -> void:
+    _fallback_candidates.clear()
+    var scene_root: Node = get_tree().current_scene
+    if scene_root == null:
+        return
+    _collect_supported_touch_areas(scene_root)
+
+
+func _collect_supported_touch_areas(root: Node) -> void:
+    if root is Area3D:
+        var area_node: Area3D = root as Area3D
+        if _is_supported_touch_area(area_node):
+            _fallback_candidates.push_back(area_node)
+    for i in range(root.get_child_count()):
+        _collect_supported_touch_areas(root.get_child(i))
+
+
+func _is_area_near_touch_surface(area: Area3D) -> bool:
+    var collision_shape: CollisionShape3D = _screen_body.get_node_or_null("CollisionShape3D") as CollisionShape3D
+    if collision_shape == null:
+        return false
+    if collision_shape.shape == null:
+        return false
+    if not collision_shape.shape is BoxShape3D:
+        return false
+
+    var box_shape: BoxShape3D = collision_shape.shape as BoxShape3D
+    var local: Vector3 = collision_shape.global_transform.affine_inverse() * area.global_position
+    var half_x: float = box_shape.size.x * 0.5
+    var half_y: float = box_shape.size.y * 0.5
+    if absf(local.x) > half_x:
+        return false
+    if absf(local.y) > half_y:
+        return false
+    return absf(local.z) <= fallback_touch_depth
+
+
+func _trigger_touch_click(area: Area3D) -> void:
+    var now: float = Time.get_ticks_msec() / 1000.0
+    if _cooldown_by_area.get(area, 0.0) > now:
+        return
+    _cooldown_by_area[area] = now + click_cooldown_seconds
+    var at_2d: Vector2 = _clamp_to_viewport(_screen_body.global_to_viewport(area.global_position))
+    _push_click_pair(at_2d, false)
+
+
 func _process(delta: float) -> void:
     if not scroll_enabled or not _touch_area or not _screen_body.has_method("global_to_viewport"):
         return
@@ -106,7 +192,7 @@ func _process(delta: float) -> void:
     var overlapping: Array[Area3D] = _touch_area.get_overlapping_areas()
     var scroll_pose_fingers: Array[Player_Finger] = []
     for area in overlapping:
-        if area is Player_Finger:
+        if area is Player_Finger and _is_supported_touch_area(area):
             var finger: Player_Finger = area as Player_Finger
             if _is_scroll_pose(finger):
                 scroll_pose_fingers.append(finger)
@@ -189,13 +275,13 @@ func _push_scroll(delta_y: float) -> void:
 
 
 func _on_touch_area_entered(area: Area3D) -> void:
-    if not area is Player_Finger:
+    if not _is_supported_touch_area(area):
         return
     if not is_instance_valid(_viewport) or not _screen_body.has_method("global_to_viewport"):
         return
-    var finger: Player_Finger = area as Player_Finger
+    var finger: Player_Finger = area as Player_Finger if area is Player_Finger else null
     # Don't trigger click when user is in scroll pose (pinch/fist)
-    if scroll_enabled and _is_scroll_pose(finger):
+    if finger != null and scroll_enabled and _is_scroll_pose(finger):
         return
 
     var now: float = Time.get_ticks_msec() / 1000.0
@@ -244,6 +330,12 @@ func _on_touch_area_exited(area: Area3D) -> void:
 func _push_click_pair(at: Vector2, is_double_click: bool) -> void:
     if not is_instance_valid(_viewport):
         return
+    var touch_down: InputEventScreenTouch = InputEventScreenTouch.new()
+    touch_down.index = 0
+    touch_down.position = at
+    touch_down.pressed = true
+    _viewport.push_input(touch_down)
+
     var down := InputEventMouseButton.new()
     down.button_index = MOUSE_BUTTON_LEFT
     down.pressed = true
@@ -253,6 +345,11 @@ func _push_click_pair(at: Vector2, is_double_click: bool) -> void:
     down.double_click = is_double_click
     _viewport.push_input(down)
 
+    var touch_up: InputEventScreenTouch = InputEventScreenTouch.new()
+    touch_up.index = 0
+    touch_up.position = at
+    touch_up.pressed = false
+
     var up := InputEventMouseButton.new()
     up.button_index = MOUSE_BUTTON_LEFT
     up.pressed = false
@@ -261,4 +358,5 @@ func _push_click_pair(at: Vector2, is_double_click: bool) -> void:
     up.button_mask = 0
     up.double_click = is_double_click
     if get_parent().enabled:
+        _viewport.push_input(touch_up)
         _viewport.push_input(up)
