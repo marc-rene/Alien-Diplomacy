@@ -2,6 +2,7 @@
 
 [ext_resource type="Shader" uid="uid://dt6txrvefp8cw" path="res://Art/Planets/Shaders/Planet_Body_Shader.gdshader" id="1_80452"]
 [ext_resource type="Texture2D" uid="uid://dwufejawo04hp" path="res://Art/Planets/Noises/Sun-Looking.tres" id="2_80452"]
+[ext_resource type="Script" uid="uid://bwwd6u40q6jog" path="res://Art/Planets/Solar_System.gd" id="3_d4x0u"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_3iko2"]
 render_priority = 0
@@ -28,8 +29,9 @@ shader_parameter/noise = ExtResource("2_80452")
 material = SubResource("ShaderMaterial_3iko2")
 radius = 1.5
 height = 3.0
-radial_segments = 32
-rings = 10
+radial_segments = 40
 
 [node name="THE GODDAMN SUN" type="MeshInstance3D" unique_id=732950670]
 mesh = SubResource("SphereMesh_k0128")
+script = ExtResource("3_d4x0u")
+Spinny_Amount = -0.01

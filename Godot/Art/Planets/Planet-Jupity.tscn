@@ -2,6 +2,7 @@
 
 [ext_resource type="Shader" uid="uid://dt6txrvefp8cw" path="res://Art/Planets/Shaders/Planet_Body_Shader.gdshader" id="1_2s4c6"]
 [ext_resource type="Texture2D" uid="uid://dlfd00xwh74qw" path="res://Art/Planets/Noises/Gassy-Looking.tres" id="2_2s4c6"]
+[ext_resource type="Script" uid="uid://bwwd6u40q6jog" path="res://Art/Planets/Solar_System.gd" id="3_tscdw"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_3iko2"]
 render_priority = 0
@@ -28,8 +29,9 @@ shader_parameter/noise = ExtResource("2_2s4c6")
 material = SubResource("ShaderMaterial_3iko2")
 radius = 1.0
 height = 2.0
-radial_segments = 16
-rings = 8
+radial_segments = 20
+rings = 16
 
 [node name="PlanetKnockOffJupiter" type="MeshInstance3D" unique_id=732950670]
 mesh = SubResource("SphereMesh_k0128")
+script = ExtResource("3_tscdw")
