@@ -1,0 +1,7 @@
+com.aliendiploracy.speech-pngs-0 C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\build\generated\res\pngs\release
+com.aliendiploracy.speech-resValues-1 C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\build\generated\res\resValues\release
+com.aliendiploracy.speech-mergeReleaseResources-2 C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\build\intermediates\incremental\release\mergeReleaseResources\merged.dir
+com.aliendiploracy.speech-mergeReleaseResources-3 C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\build\intermediates\incremental\release\mergeReleaseResources\stripped.dir
+com.aliendiploracy.speech-release-4 C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\build\intermediates\merged_res\release\mergeReleaseResources
+com.aliendiploracy.speech-main-5 C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\src\main\res
+com.aliendiploracy.speech-release-6 C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\src\release\res

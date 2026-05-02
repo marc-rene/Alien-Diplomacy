@@ -1,0 +1,42 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.aliendiploracy.speech" >
+4
+5    <uses-sdk android:minSdkVersion="24" />
+6
+7    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+7-->C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\src\main\AndroidManifest.xml:2:5-71
+7-->C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\src\main\AndroidManifest.xml:2:22-68
+8    <uses-permission android:name="android.permission.INTERNET" />
+8-->C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\src\main\AndroidManifest.xml:3:5-67
+8-->C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\src\main\AndroidManifest.xml:3:22-64
+9
+10    <!-- Android 11+ package visibility: lets the app resolve the speech recognition service -->
+11    <queries>
+11-->C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\src\main\AndroidManifest.xml:6:5-10:15
+12        <intent>
+12-->C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\src\main\AndroidManifest.xml:7:9-9:18
+13            <action android:name="android.speech.RecognitionService" />
+13-->C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\src\main\AndroidManifest.xml:8:13-72
+13-->C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\src\main\AndroidManifest.xml:8:21-69
+14        </intent>
+15    </queries>
+16
+17    <application>
+17-->C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\src\main\AndroidManifest.xml:12:5-22:19
+18
+19        <!--
+20            This meta-data tells Godot's GodotPluginRegistry to load our plugin.
+21            The key format is: org.godotengine.plugin.v2.<PluginName>
+22            The value is the fully-qualified class name.
+23            Gradle's manifest merger copies this into the app's AndroidManifest.xml.
+24        -->
+25        <meta-data
+25-->C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\src\main\AndroidManifest.xml:19:9-21:80
+26            android:name="org.godotengine.plugin.v2.SpeechRecognizerPlugin"
+26-->C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\src\main\AndroidManifest.xml:20:13-76
+27            android:value="com.aliendiploracy.speech.SpeechRecognizerPlugin" />
+27-->C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\src\main\AndroidManifest.xml:21:13-77
+28    </application>
+29
+30</manifest>

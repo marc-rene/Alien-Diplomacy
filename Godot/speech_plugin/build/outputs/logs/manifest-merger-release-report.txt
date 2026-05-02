@@ -1,0 +1,40 @@
+-- Merging decision tree log ---
+manifest
+ADDED from C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\src\main\AndroidManifest.xml:1:1-23:12
+INJECTED from C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\src\main\AndroidManifest.xml:1:1-23:12
+	package
+		INJECTED from C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\src\main\AndroidManifest.xml
+	xmlns:android
+		ADDED from C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\src\main\AndroidManifest.xml:1:11-69
+uses-permission#android.permission.RECORD_AUDIO
+ADDED from C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\src\main\AndroidManifest.xml:2:5-71
+	android:name
+		ADDED from C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\src\main\AndroidManifest.xml:2:22-68
+uses-permission#android.permission.INTERNET
+ADDED from C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\src\main\AndroidManifest.xml:3:5-67
+	android:name
+		ADDED from C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\src\main\AndroidManifest.xml:3:22-64
+queries
+ADDED from C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\src\main\AndroidManifest.xml:6:5-10:15
+intent#action:name:android.speech.RecognitionService
+ADDED from C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\src\main\AndroidManifest.xml:7:9-9:18
+action#android.speech.RecognitionService
+ADDED from C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\src\main\AndroidManifest.xml:8:13-72
+	android:name
+		ADDED from C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\src\main\AndroidManifest.xml:8:21-69
+application
+ADDED from C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\src\main\AndroidManifest.xml:12:5-22:19
+meta-data#org.godotengine.plugin.v2.SpeechRecognizerPlugin
+ADDED from C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\src\main\AndroidManifest.xml:19:9-21:80
+	android:value
+		ADDED from C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\src\main\AndroidManifest.xml:21:13-77
+	android:name
+		ADDED from C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\src\main\AndroidManifest.xml:20:13-76
+uses-sdk
+INJECTED from C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\src\main\AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\src\main\AndroidManifest.xml
+INJECTED from C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\src\main\AndroidManifest.xml
+	android:targetSdkVersion
+		INJECTED from C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\src\main\AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from C:\Users\C21381381\Desktop\Homework\Autonomous Agents\Alien-Diplomacy\Godot\speech_plugin\src\main\AndroidManifest.xml

@@ -1,0 +1,33 @@
+plugins {
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android'
+}
+
+repositories {
+    google()
+    mavenCentral()
+}
+
+android {
+    compileSdk 35
+    namespace 'com.aliendiploracy.speech'
+
+    defaultConfig {
+        minSdk 24
+        targetSdk 35
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+}
+
+dependencies {
+    // Godot AAR provides GodotPlugin — compileOnly so it is not bundled
+    compileOnly fileTree(dir: '../android/build/libs/debug', include: ['*.aar'])
+}

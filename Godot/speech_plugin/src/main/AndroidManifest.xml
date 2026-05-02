@@ -1,0 +1,23 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Android 11+ package visibility: lets the app resolve the speech recognition service -->
+    <queries>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+    </queries>
+
+    <application>
+        <!--
+            This meta-data tells Godot's GodotPluginRegistry to load our plugin.
+            The key format is: org.godotengine.plugin.v2.<PluginName>
+            The value is the fully-qualified class name.
+            Gradle's manifest merger copies this into the app's AndroidManifest.xml.
+        -->
+        <meta-data
+            android:name="org.godotengine.plugin.v2.SpeechRecognizerPlugin"
+            android:value="com.aliendiploracy.speech.SpeechRecognizerPlugin" />
+    </application>
+</manifest>
