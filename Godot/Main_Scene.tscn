@@ -10,6 +10,9 @@
 [ext_resource type="PackedScene" uid="uid://bnmk3q8jripxr" path="res://Art/Ships/Friendly_Ship.glb" id="6_654x7"]
 [ext_resource type="PackedScene" uid="uid://b7yyvvp7g02hq" path="res://Art/Ships/Enemy_Ship.glb" id="7_lhke2"]
 [ext_resource type="PackedScene" uid="uid://5ecukatlrvje" path="res://Art/Ships/Friendly MotherShip - UNSC.glb" id="9_wqxms"]
+[ext_resource type="Shader" uid="uid://bno7igielmva1" path="res://Art/Ships/Shooter.gdshader" id="11_j5t71"]
+[ext_resource type="Shader" uid="uid://do03ck23mp0fb" path="res://Art/Ships/Bolt.gdshader" id="12_yilkt"]
+[ext_resource type="Script" uid="uid://bldjalk4f6bnm" path="res://Art/Ships/MothershipFloat.gd" id="13_u3x7j"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_8sucx"]
 sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
@@ -19,7 +22,6 @@ ground_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
 sky_material = SubResource("ProceduralSkyMaterial_8sucx")
 
 [sub_resource type="Environment" id="Environment_tkmsp"]
-background_energy_multiplier = 0.0
 sky = SubResource("Sky_7fr83")
 ambient_light_source = 2
 ambient_light_color = Color(1, 1, 1, 1)
@@ -34,8 +36,11 @@ transform_format = 1
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xd67x"]
 resource_name = "Hull"
-cull_mode = 2
-roughness = 0.5
+cull_mode = 1
+albedo_color = Color(5.7756904e-07, 0.5411326, 0.19102025, 1)
+metallic = 0.09
+metallic_specular = 0.43
+roughness = 0.54
 emission = Color(1, 1, 1, 1)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ep5m6"]
@@ -161,6 +166,45 @@ _surfaces = [{
 blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_31q0q")
 
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_3qyon"]
+shader = ExtResource("11_j5t71")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_uwvao"]
+render_priority = 0
+shader = ExtResource("12_yilkt")
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_kj35w"]
+material = SubResource("ShaderMaterial_uwvao")
+top_radius = 0.01
+bottom_radius = 0.01
+height = 0.1
+radial_segments = 4
+rings = 1
+cap_top = false
+cap_bottom = false
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_uwvao"]
+shading_mode = 2
+albedo_color = Color(0.3882353, 0.8980392, 0.26666668, 1)
+
+[sub_resource type="TorusMesh" id="TorusMesh_kj35w"]
+material = SubResource("StandardMaterial3D_uwvao")
+inner_radius = 0.05
+outer_radius = 0.1
+rings = 4
+ring_segments = 8
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kj35w"]
+shading_mode = 2
+albedo_color = Color(0.5921569, 0, 0.26666668, 1)
+
+[sub_resource type="TorusMesh" id="TorusMesh_wtuui"]
+material = SubResource("StandardMaterial3D_kj35w")
+inner_radius = 0.05
+outer_radius = 0.1
+rings = 4
+ring_segments = 8
+
 [node name="MainScene" type="Node3D" unique_id=1483918031]
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1241392909]
@@ -170,6 +214,7 @@ environment = SubResource("Environment_tkmsp")
 current = true
 
 [node name="OffbrandSolarSystem" type="Node3D" parent="." unique_id=1892502979]
+unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.9779003, -4.4441123)
 script = ExtResource("2_3qyon")
 Spinny_Amount = 0.03
@@ -190,8 +235,9 @@ Spinny_Amount = 0.3
 Spinny_Amount = 0.1
 
 [node name="Boid Manager" type="Node3D" parent="." unique_id=878142912 node_paths=PackedStringArray("Friendly_Spawn_Point", "Friendly_Mesh", "Friendly_MultiMesh", "Enemy_Spawn_Point", "Enemy_Mesh", "Enemy_MultiMesh")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.090516, 0, 0)
 script = ExtResource("6_4ityq")
-Max_Num_Boids = 500
+Max_Num_Boids = 4
 Friendly_Spawn_Point = NodePath("../Friendly MotherShip - UNSC")
 Friendly_Mesh = NodePath("Friendly_Ship/Friendly Space Fighter")
 Friendly_MultiMesh = NodePath("Friendly_mult_mesh")
@@ -200,11 +246,18 @@ Enemy_Mesh = NodePath("Enemy_Ship/Enemy Space Fighter")
 Enemy_MultiMesh = NodePath("Enemy_mult_mesh")
 max_speed = 5.0
 mass = 20.0
+reload_distance = 1.0
+reload_time_required = 5.0
+fire_rate_seconds = 0.5
+bullet_speed = 0.1
+planet_hit_pulse_duration = 0.5
+bolt_visual_radius = 0.01
 
 [node name="Friendly_Ship" parent="Boid Manager" unique_id=435205655 instance=ExtResource("6_654x7")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -100, 0)
 
 [node name="Friendly Space Fighter" parent="Boid Manager/Friendly_Ship" index="0" unique_id=988474257]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 0, 0, 0)
 ignore_occlusion_culling = true
 
 [node name="Enemy_Ship" parent="Boid Manager" unique_id=551338211 instance=ExtResource("7_lhke2")]
@@ -220,15 +273,39 @@ multimesh = SubResource("MultiMesh_wqxms")
 [node name="Enemy_mult_mesh" type="MultiMeshInstance3D" parent="Boid Manager" unique_id=1500831070]
 multimesh = SubResource("MultiMesh_4ityq")
 
-[node name="Friendly MotherShip - UNSC" type="Node3D" parent="." unique_id=1224971762]
-transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -8.588807, 0, -8.413261)
+[node name="Friendly MotherShip - UNSC" type="Node3D" parent="." unique_id=1224971762 node_paths=PackedStringArray("DEBUG_Marker_Mesh", "Solar_System_Root")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.588807, 0, -8.413261)
+script = ExtResource("13_u3x7j")
+DEBUG_Marker_Mesh = NodePath("../Friendly Mothership Debug Target Point")
+Solar_System_Root = NodePath("../OffbrandSolarSystem")
 
 [node name="HullEngine" type="MeshInstance3D" parent="Friendly MotherShip - UNSC" unique_id=892950103]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.106104, 0, 0)
+transform = Transform3D(0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, 0, 0, 0)
 mesh = SubResource("ArrayMesh_wqxms")
 
-[node name="Enemy MotherShip - UNSC2" parent="." unique_id=416295234 instance=ExtResource("9_wqxms")]
-transform = Transform3D(-0.14785573, 0, 0.13467993, 0, 0.2, 0, -0.13467993, 0, -0.14785573, 9.221912, 3.530572, 4.77701)
+[node name="Enemy MotherShip - UNSC2" parent="." unique_id=416295234 node_paths=PackedStringArray("DEBUG_Marker_Mesh", "Solar_System_Root") instance=ExtResource("9_wqxms")]
+transform = Transform3D(-0.7392786, 0, 0.6733996, 0, 1, 0, -0.6733996, 0, -0.7392786, 9.221912, 3.530572, 4.77701)
+script = ExtResource("13_u3x7j")
+mode = 1
+DEBUG_Marker_Mesh = NodePath("../Enemy Mothership Debug Target Point")
+Solar_System_Root = NodePath("../OffbrandSolarSystem")
+
+[node name="HullEngine" parent="Enemy MotherShip - UNSC2" index="0" unique_id=660548559]
+transform = Transform3D(0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, 0, 0, 0)
+
+[node name="Ships Canons Particles" type="GPUParticles3D" parent="." unique_id=605088348]
+sub_emitter = NodePath(".")
+interp_to_end = 1.0
+process_material = SubResource("ShaderMaterial_3qyon")
+draw_pass_1 = SubResource("CylinderMesh_kj35w")
+
+[node name="Friendly Mothership Debug Target Point" type="MeshInstance3D" parent="." unique_id=335144106]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.0091243, 0, 0)
+mesh = SubResource("TorusMesh_kj35w")
+
+[node name="Enemy Mothership Debug Target Point" type="MeshInstance3D" parent="." unique_id=1211217248]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8000375, 0, 0)
+mesh = SubResource("TorusMesh_wtuui")
 
 [editable path="Boid Manager/Friendly_Ship"]
 [editable path="Boid Manager/Enemy_Ship"]
