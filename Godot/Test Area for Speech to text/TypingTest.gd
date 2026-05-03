@@ -28,6 +28,7 @@ func _resolve_model_path(filename: String) -> String:
         var user_dir := OS.get_user_data_dir()
         candidates = [
             "user://" + filename,
+            OS.get_system_dir(OS.SYSTEM_DIR_DOWNLOADS) + filename,
             "/sdcard/Android/data/com.example.aliendiplomacy/files/" + filename,
             user_dir + "/" + filename,
             "/sdcard/" + filename,
@@ -43,6 +44,8 @@ func _resolve_model_path(filename: String) -> String:
         if FileAccess.file_exists(path):
             print("Model found at: ", path)
             return path
+        else:
+            print("Model was NOT at ", path)
 
     return ""
 
