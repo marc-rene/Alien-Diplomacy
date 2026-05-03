@@ -16,28 +16,28 @@ const MAX_LINES := 6
 
 
 func _ready() -> void:
-	status_label.text = "Fist = talk"
-	transcript_label.text = ""
+    status_label.text = "Fist = talk"
+    transcript_label.text = ""
 
 
 func _on_mic_recorder_recording_state_changed(is_recording: bool) -> void:
-	if is_recording:
-		status_label.text = "Listening..."
-		status_label.modulate = Color(1, 0.3, 0.3)
-	else:
-		status_label.text = "Transcribing..."
-		status_label.modulate = Color(1, 1, 0.3)
+    if is_recording:
+        status_label.text = "Listening..."
+        status_label.modulate = Color(1, 0.3, 0.3)
+    else:
+        status_label.text = "Transcribing..."
+        status_label.modulate = Color(1, 1, 0.3)
 
 
 func _on_mic_recorder_transcription_ready(text: String) -> void:
-	status_label.text = "Fist = talk"
-	status_label.modulate = Color(1, 1, 1)
+    status_label.text = "Fist = talk"
+    status_label.modulate = Color(1, 1, 1)
 
-	if text.strip_edges() == "":
-		return  # Error or no-match — reset label but don't add blank line
+    if text.strip_edges() == "":
+        return  # Error or no-match — reset label but don't add blank line
 
-	_transcript_lines.append(text)
-	if _transcript_lines.size() > MAX_LINES:
-		_transcript_lines.pop_front()
+    _transcript_lines.append(text)
+    if _transcript_lines.size() > MAX_LINES:
+        _transcript_lines.pop_front()
 
-	transcript_label.text = "\n".join(_transcript_lines)
+    transcript_label.text = "\n".join(_transcript_lines)

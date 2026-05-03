@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://erun0f16ifda"]
 
-[ext_resource type="Script" path="res://Test Area for Speech to text/TypingTest.gd" id="1_typing"]
+[ext_resource type="Script" uid="uid://dapvit6c6j0na" path="res://Test Area for Speech to text/TypingTest.gd" id="1_typing"]
 
 [node name="TypingTest" type="PanelContainer" unique_id=1325558352]
 anchors_preset = 15
@@ -21,12 +21,12 @@ theme_override_constants/margin_bottom = 8
 layout_mode = 2
 
 [node name="ChatHistory" type="RichTextLabel" parent="MarginContainer/VBoxContainer" unique_id=850184848]
+custom_minimum_size = Vector2(0, 100)
 layout_mode = 2
 size_flags_vertical = 3
-custom_minimum_size = Vector2(0, 100)
 bbcode_enabled = true
-scroll_following = true
 text = "[color=gray]Waiting for AI...[/color]"
+scroll_following = true
 
 [node name="TextEdit" type="LineEdit" parent="MarginContainer/VBoxContainer" unique_id=836065993]
 layout_mode = 2
