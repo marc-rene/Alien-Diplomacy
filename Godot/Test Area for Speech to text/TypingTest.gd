@@ -22,8 +22,29 @@ func _ready() -> void:
 var _last_tried_paths: Array[String] = []
 
 
+func _print_all_files_in_dir(dir_path: String) -> void:
+    var dir := DirAccess.open(dir_path)
+    if dir == null:
+        print("Could not open directory: ", dir_path)
+        return
+
+    dir.list_dir_begin()
+    var item_name := dir.get_next()
+    while item_name != "":
+        if item_name != "." and item_name != "..":
+            var full_path := dir_path.path_join(item_name)
+            if dir.current_is_dir():
+                _print_all_files_in_dir(full_path)
+            else:
+                print(full_path)
+        item_name = dir.get_next()
+    dir.list_dir_end()
+
+
 func _resolve_model_path(filename: String) -> String:
     var candidates: Array[String] = []
+    print("All files in user:// are:")
+    _print_all_files_in_dir("user://")
     if OS.get_name() == "Android":
         var user_dir := OS.get_user_data_dir()
         candidates = [

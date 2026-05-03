@@ -1,7 +1,7 @@
 param(
-    [string]$SourceFile = "C:\Other\Git\Alien-Diplomacy\Godot\user-bge-m3-q8_0.gguf",
+    [string]$SourceFile = "C:\Other\Git\Alien-Diplomacy\Godot\gemma-2-2b-it-Q4_K_M.gguf",
     [string]$PackageName = "com.example.aliendiplomacy",
-    [string]$RemotePath = "files/user-bge-m3-q8_0.gguf",
+    [string]$RemotePath = "files/gemma-2-2b-it-Q4_K_M.gguf",
     [switch]$VerifyHash
 )
 
