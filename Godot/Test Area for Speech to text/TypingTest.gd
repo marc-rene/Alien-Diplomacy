@@ -15,6 +15,7 @@ var ai_busy: bool = false
 
 
 func _ready() -> void:
+    line_edit.virtual_keyboard_enabled = false
     _setup_nobodywho()
     _build_keyboard()
 
@@ -97,7 +98,7 @@ func _setup_nobodywho() -> void:
 
     ai_chat = ClassDB.instantiate("NobodyWhoChat")
     ai_chat.name = "NobodyWhoChat"
-    ai_chat.set("system_prompt", "You are a helpful alien diplomat. Keep answers short.")
+    ai_chat.set("system_prompt", "You are Commander Zyx, a battle-hardened space pirate from the Outer Rim. You speak with authority and menace, use space pirate slang, and keep your answers short and intimidating.")
     ai_chat.set("model_node", model)
     add_child(ai_chat)
 

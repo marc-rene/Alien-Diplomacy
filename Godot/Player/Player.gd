@@ -14,7 +14,7 @@ signal NONE_signal(started: bool)
 
 
 func _ready() -> void:
-	# XR is initialised by the scene's main.gd — Player only wires up hand tracking
+    # XR is initialised by the scene's main.gd — Player only wires up hand tracking
     %HandPoseDetector_LEFT.pose_started.connect(_on_hand_pose_detector_pose_started_L)
     %HandPoseDetector_LEFT.pose_ended.connect(_on_hand_pose_detector_pose_ended_L)
     %HandPoseDetector_RIGHT.pose_started.connect(_on_hand_pose_detector_pose_started_R)
