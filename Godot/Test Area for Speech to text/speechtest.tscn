@@ -2,8 +2,6 @@
 
 [ext_resource type="Script" uid="uid://i83bv0anfo3b" path="res://Test Area for Speech to text/main.gd" id="1_11cvw"]
 [ext_resource type="PackedScene" uid="uid://cdkojrqd5o300" path="res://Player/Player.tscn" id="1_h22dd"]
-[ext_resource type="Script" uid="uid://dpirfpaiub026" path="res://Test Area for Speech to text/SpeechTestUI.gd" id="4_mg3l6"]
-[ext_resource type="Script" uid="uid://caprxo4rbm4t8" path="res://Test Area for Speech to text/AndroidSpeechRecognizer.gd" id="4_xlesu"]
 [ext_resource type="PackedScene" uid="uid://clujaf3u776a3" path="res://addons/godot-xr-tools/objects/viewport_2d_in_3d.tscn" id="5_11cvw"]
 [ext_resource type="PackedScene" uid="uid://erun0f16ifda" path="res://Test Area for Speech to text/Typing test.tscn" id="6_jjp7m"]
 [ext_resource type="Script" uid="uid://djnwwqja7k7xt" path="res://Scripts/Viewport2DIn3DHandTouch.gd" id="7_jjp7m"]
@@ -31,28 +29,14 @@ environment = SubResource("Environment_1gy3x")
 [node name="Player" parent="." unique_id=1047638996 instance=ExtResource("1_h22dd")]
 current = true
 
-[node name="SpeechtestUI" type="Node3D" parent="." unique_id=1383159731]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -1.5)
-script = ExtResource("4_mg3l6")
-
-[node name="StatusLabel3D" type="Label3D" parent="SpeechtestUI" unique_id=832686598]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.15, 0)
-
-[node name="TranscriptLabel3D" type="Label3D" parent="SpeechtestUI" unique_id=264676]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.15, 0)
-pixel_size = 0.004
-
-[node name="AndroidSpeechRecognizer" type="Node" parent="." unique_id=211507429]
-script = ExtResource("4_xlesu")
-player = NodePath("../Player")
-
 [node name="Viewport2Din3D" parent="." unique_id=456937873 instance=ExtResource("5_11cvw")]
 process_mode = 3
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.9604645e-08, 0.83030534, -0.7250647)
-screen_size = Vector2(0.5, 0.3)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.9604645e-08, 1.0187521, -0.7250647)
+screen_size = Vector2(0.5, 0.5)
 scene = ExtResource("6_jjp7m")
-viewport_size = Vector2(500, 300)
+viewport_size = Vector2(500, 500)
 unshaded = true
+scene_properties_keys = PackedStringArray("TypingTest.gd")
 
 [node name="Node" type="Node" parent="Viewport2Din3D" unique_id=306719]
 script = ExtResource("7_jjp7m")
@@ -68,6 +52,3 @@ scene_properties_keys = PackedStringArray("aichat.gd")
 [node name="Viewport2DIn3DHandTouch" type="Node" parent="Viewport2Din3D2" unique_id=1585338130]
 script = ExtResource("7_jjp7m")
 metadata/_custom_type_script = "uid://djnwwqja7k7xt"
-
-[connection signal="recording_state_changed" from="AndroidSpeechRecognizer" to="SpeechtestUI" method="_on_mic_recorder_recording_state_changed"]
-[connection signal="transcription_ready" from="AndroidSpeechRecognizer" to="SpeechtestUI" method="_on_mic_recorder_transcription_ready"]

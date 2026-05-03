@@ -78,10 +78,10 @@ static func Is_Using_Offbrand_Physics_DLSS() -> bool:
     return boid_manager_instance.offbrand_physics_DLSS
 
 static func How_Many_Boids() -> int:
-    return boid_manager_instance.Max_Num_Boids
+	return boid_manager_instance.Max_Num_Boids
 
 static func How_Many_Boids_Active() -> int:
-    return boid_manager_instance.eeees + boid_manager_instance.french
+	return boid_manager_instance.eeees + boid_manager_instance.french
 
 # SO here's the naming convention
 # Entities will end in _ent
@@ -137,40 +137,40 @@ var RELOAD_PULSE_LIFETIMES_comp : Array[float] = []
 func Refresh_Entities():
     inited = false
     ALL_ENTITIES_ent.resize(Max_Num_Boids)
-    ALL_ENTITIES_ent.fill(0) # You're all deactivated!
+	ALL_ENTITIES_ent.fill(0) # You're all deactivated!
 
-    VELOCITIES_comp.resize(Max_Num_Boids)
-    VELOCITIES_comp.fill(Vector3.ZERO)
+	VELOCITIES_comp.resize(Max_Num_Boids)
+	VELOCITIES_comp.fill(Vector3.ZERO)
 
-    ALL_ENTITY_AMMOS_comp.resize(Max_Num_Boids)
-    ALL_ENTITY_AMMOS_comp.fill(Max_Ammo_Capacity)
+	ALL_ENTITY_AMMOS_comp.resize(Max_Num_Boids)
+	ALL_ENTITY_AMMOS_comp.fill(Max_Ammo_Capacity)
 
-    ALL_ENTITY_HEALTH_comp.resize(Max_Num_Boids)
-    ALL_ENTITY_HEALTH_comp.fill(ship_max_health)
+	ALL_ENTITY_HEALTH_comp.resize(Max_Num_Boids)
+	ALL_ENTITY_HEALTH_comp.fill(ship_max_health)
 
-    ALL_ENTITY_TARGET_INDEX_comp.resize(Max_Num_Boids)
-    ALL_ENTITY_TARGET_INDEX_comp.fill(-1)
+	ALL_ENTITY_TARGET_INDEX_comp.resize(Max_Num_Boids)
+	ALL_ENTITY_TARGET_INDEX_comp.fill(-1)
 
-    ALL_ENTITY_TARGET_KIND_comp.resize(Max_Num_Boids)
-    ALL_ENTITY_TARGET_KIND_comp.fill(0)
+	ALL_ENTITY_TARGET_KIND_comp.resize(Max_Num_Boids)
+	ALL_ENTITY_TARGET_KIND_comp.fill(0)
 
-    ALL_ENTITY_TARGET_RECHECK_TIMER_comp.resize(Max_Num_Boids)
-    ALL_ENTITY_FIRE_COOLDOWN_comp.resize(Max_Num_Boids)
-    ALL_ENTITY_RELOAD_TIMER_comp.resize(Max_Num_Boids)
-    ALL_ENTITY_RELOAD_PULSE_TIMER_comp.resize(Max_Num_Boids)
-    for i in range(Max_Num_Boids):
-        ALL_ENTITY_TARGET_RECHECK_TIMER_comp[i] = randf_range(0.0, target_recheck_seconds)
-        ALL_ENTITY_FIRE_COOLDOWN_comp[i] = randf_range(0.0, fire_rate_seconds)
-        ALL_ENTITY_RELOAD_TIMER_comp[i] = 0.0
-        ALL_ENTITY_RELOAD_PULSE_TIMER_comp[i] = 0.0
+	ALL_ENTITY_TARGET_RECHECK_TIMER_comp.resize(Max_Num_Boids)
+	ALL_ENTITY_FIRE_COOLDOWN_comp.resize(Max_Num_Boids)
+	ALL_ENTITY_RELOAD_TIMER_comp.resize(Max_Num_Boids)
+	ALL_ENTITY_RELOAD_PULSE_TIMER_comp.resize(Max_Num_Boids)
+	for i in range(Max_Num_Boids):
+		ALL_ENTITY_TARGET_RECHECK_TIMER_comp[i] = randf_range(0.0, target_recheck_seconds)
+		ALL_ENTITY_FIRE_COOLDOWN_comp[i] = randf_range(0.0, fire_rate_seconds)
+		ALL_ENTITY_RELOAD_TIMER_comp[i] = 0.0
+		ALL_ENTITY_RELOAD_PULSE_TIMER_comp[i] = 0.0
 
-    OFFSETS_comp.resize(Max_Num_Boids)
-    for i in range(Max_Num_Boids):
-        OFFSETS_comp.encode_s8(i, randi_range(-100, 100))
-        if OFFSETS_comp[i] == 0:
-            OFFSETS_comp[i] += 1
+	OFFSETS_comp.resize(Max_Num_Boids)
+	for i in range(Max_Num_Boids):
+		OFFSETS_comp.encode_s8(i, randi_range(-100, 100))
+		if OFFSETS_comp[i] == 0:
+			OFFSETS_comp[i] += 1
 
-    max_friendly_count = int(Friendly_Enemy_Count_Ratio * Max_Num_Boids)
+	max_friendly_count = int(Friendly_Enemy_Count_Ratio * Max_Num_Boids)
 
     temp_friend_mesh_push_buffer.resize(max_friendly_count * 12)
     prev_friend_mesh_push_buffer.resize(max_friendly_count * 12)
@@ -178,43 +178,43 @@ func Refresh_Entities():
     prev_enemy_mesh_push_buffer.resize((Max_Num_Boids - max_friendly_count) * 12)
     _configure_bullet_pool()
 
-    print("Max num of boids: %d\n\tFriendly boids: %d\n\tEnemy boids: %d" % [ALL_ENTITIES_ent.size(), max_friendly_count, Max_Num_Boids - max_friendly_count])
+	print("Max num of boids: %d\n\tFriendly boids: %d\n\tEnemy boids: %d" % [ALL_ENTITIES_ent.size(), max_friendly_count, Max_Num_Boids - max_friendly_count])
 
-    Friendly_MultiMesh.multimesh.mesh = Friendly_Mesh.mesh
-    Enemy_MultiMesh.multimesh.mesh = Enemy_Mesh.mesh
-    Friendly_MultiMesh.multimesh.instance_count = max_friendly_count
-    Enemy_MultiMesh.multimesh.instance_count = Max_Num_Boids - max_friendly_count
-    Friendly_MultiMesh.multimesh.visible_instance_count = max_friendly_count
-    Enemy_MultiMesh.multimesh.visible_instance_count = Max_Num_Boids - max_friendly_count
+	Friendly_MultiMesh.multimesh.mesh = Friendly_Mesh.mesh
+	Enemy_MultiMesh.multimesh.mesh = Enemy_Mesh.mesh
+	Friendly_MultiMesh.multimesh.instance_count = max_friendly_count
+	Enemy_MultiMesh.multimesh.instance_count = Max_Num_Boids - max_friendly_count
+	Friendly_MultiMesh.multimesh.visible_instance_count = max_friendly_count
+	Enemy_MultiMesh.multimesh.visible_instance_count = Max_Num_Boids - max_friendly_count
 
-    keep_spawning_f = true
-    keep_spawning_e = true
-    inited = true
+	keep_spawning_f = true
+	keep_spawning_e = true
+	inited = true
 
 
 var inited : bool = false
 func _ready():
-    if Friendly_Spawn_Point == null or Friendly_Mesh == null or Friendly_MultiMesh == null or Enemy_Spawn_Point == null or Enemy_Mesh == null or Enemy_MultiMesh == null:
-        printerr("Yo aint said what yo homies or estonies is!!!")
-        set_physics_process(false)
-        return
+	if Friendly_Spawn_Point == null or Friendly_Mesh == null or Friendly_MultiMesh == null or Enemy_Spawn_Point == null or Enemy_Mesh == null or Enemy_MultiMesh == null:
+		printerr("Yo aint said what yo homies or estonies is!!!")
+		set_physics_process(false)
+		return
 
-    boid_manager_instance = self
-    Engine.physics_ticks_per_second = starting_physics_tick
+	boid_manager_instance = self
+	Engine.physics_ticks_per_second = starting_physics_tick
 
-    ALL_ENTITIES_ent = PackedInt32Array()
-    VELOCITIES_comp = PackedVector3Array()
-    OFFSETS_comp = PackedByteArray()
-    ALL_ENTITY_AMMOS_comp = PackedInt32Array()
-    ALL_ENTITY_HEALTH_comp = PackedInt32Array()
-    ALL_ENTITY_TARGET_INDEX_comp = PackedInt32Array()
-    ALL_ENTITY_TARGET_KIND_comp = PackedByteArray()
-    ALL_ENTITY_TARGET_RECHECK_TIMER_comp = PackedFloat32Array()
-    ALL_ENTITY_FIRE_COOLDOWN_comp = PackedFloat32Array()
-    ALL_ENTITY_RELOAD_TIMER_comp = PackedFloat32Array()
-    ALL_ENTITY_RELOAD_PULSE_TIMER_comp = PackedFloat32Array()
-    Planet_Radius_comp = PackedFloat32Array()
-    Planet_Pulse_Timer_comp = PackedFloat32Array()
+	ALL_ENTITIES_ent = PackedInt32Array()
+	VELOCITIES_comp = PackedVector3Array()
+	OFFSETS_comp = PackedByteArray()
+	ALL_ENTITY_AMMOS_comp = PackedInt32Array()
+	ALL_ENTITY_HEALTH_comp = PackedInt32Array()
+	ALL_ENTITY_TARGET_INDEX_comp = PackedInt32Array()
+	ALL_ENTITY_TARGET_KIND_comp = PackedByteArray()
+	ALL_ENTITY_TARGET_RECHECK_TIMER_comp = PackedFloat32Array()
+	ALL_ENTITY_FIRE_COOLDOWN_comp = PackedFloat32Array()
+	ALL_ENTITY_RELOAD_TIMER_comp = PackedFloat32Array()
+	ALL_ENTITY_RELOAD_PULSE_TIMER_comp = PackedFloat32Array()
+	Planet_Radius_comp = PackedFloat32Array()
+	Planet_Pulse_Timer_comp = PackedFloat32Array()
 
     Refresh_Entities()
     _resolve_scene_refs()
@@ -224,36 +224,36 @@ func _ready():
 
 
 func _resolve_scene_refs() -> void:
-    var root : Node = get_parent()
-    if root == null:
-        return
+	var root : Node = get_parent()
+	if root == null:
+		return
 
-    Planet_Targets.clear()
-    Planet_Pulse_Overlay_comp.clear()
+	Planet_Targets.clear()
+	Planet_Pulse_Overlay_comp.clear()
 
-    if root.has_node("OffbrandSolarSystem"):
-        var solar = root.get_node("OffbrandSolarSystem")
-        for child in solar.get_children():
-            if child is MeshInstance3D:
-                Planet_Targets.push_back(child)
+	if root.has_node("OffbrandSolarSystem"):
+		var solar = root.get_node("OffbrandSolarSystem")
+		for child in solar.get_children():
+			if child is MeshInstance3D:
+				Planet_Targets.push_back(child)
 
-    Friendly_MotherShip = root.get_node_or_null("Friendly MotherShip - UNSC")
-    Enemy_MotherShip = root.get_node_or_null("Enemy MotherShip - UNSC2")
+	Friendly_MotherShip = root.get_node_or_null("Friendly MotherShip - UNSC")
+	Enemy_MotherShip = root.get_node_or_null("Enemy MotherShip - UNSC2")
 
-    Planet_Radius_comp.resize(Planet_Targets.size())
-    Planet_Pulse_Timer_comp.resize(Planet_Targets.size())
-    for i in range(Planet_Targets.size()):
-        Planet_Pulse_Timer_comp[i] = 0.0
-        Planet_Radius_comp[i] = _get_planet_radius(Planet_Targets[i])
-        var overlay : StandardMaterial3D = StandardMaterial3D.new()
-        overlay.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-        overlay.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-        overlay.albedo_color = Color(1.0, 0.0, 0.0, 0.15)
-        overlay.emission_enabled = true
-        overlay.emission = Color(1.0, 0.0, 0.0)
-        overlay.emission_energy_multiplier = 0.0
-        Planet_Targets[i].material_overlay = overlay
-        Planet_Pulse_Overlay_comp.push_back(overlay)
+	Planet_Radius_comp.resize(Planet_Targets.size())
+	Planet_Pulse_Timer_comp.resize(Planet_Targets.size())
+	for i in range(Planet_Targets.size()):
+		Planet_Pulse_Timer_comp[i] = 0.0
+		Planet_Radius_comp[i] = _get_planet_radius(Planet_Targets[i])
+		var overlay : StandardMaterial3D = StandardMaterial3D.new()
+		overlay.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		overlay.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		overlay.albedo_color = Color(1.0, 0.0, 0.0, 0.15)
+		overlay.emission_enabled = true
+		overlay.emission = Color(1.0, 0.0, 0.0)
+		overlay.emission_energy_multiplier = 0.0
+		Planet_Targets[i].material_overlay = overlay
+		Planet_Pulse_Overlay_comp.push_back(overlay)
 
 
 func _setup_bolt_visuals() -> void:
@@ -265,22 +265,22 @@ func _setup_bolt_visuals() -> void:
     bolt_mm.visible_instance_count = 0
     Bolt_Visuals.multimesh = bolt_mm
 
-    var bolt_mesh : SphereMesh = SphereMesh.new()
-    bolt_mesh.radius = bolt_visual_radius
-    bolt_mesh.height = bolt_visual_radius * 2.0
-    bolt_mesh.radial_segments = 6
-    bolt_mesh.rings = 4
+	var bolt_mesh : SphereMesh = SphereMesh.new()
+	bolt_mesh.radius = bolt_visual_radius
+	bolt_mesh.height = bolt_visual_radius * 2.0
+	bolt_mesh.radial_segments = 6
+	bolt_mesh.rings = 4
 
-    var bolt_mat : StandardMaterial3D = StandardMaterial3D.new()
-    bolt_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-    bolt_mat.emission_enabled = true
-    bolt_mat.emission = Color(1.0, 0.75, 0.35)
-    bolt_mat.emission_energy_multiplier = 1.2
-    bolt_mat.albedo_color = Color(1.0, 0.75, 0.35)
-    bolt_mesh.material = bolt_mat
+	var bolt_mat : StandardMaterial3D = StandardMaterial3D.new()
+	bolt_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	bolt_mat.emission_enabled = true
+	bolt_mat.emission = Color(1.0, 0.75, 0.35)
+	bolt_mat.emission_energy_multiplier = 1.2
+	bolt_mat.albedo_color = Color(1.0, 0.75, 0.35)
+	bolt_mesh.material = bolt_mat
 
-    Bolt_Visuals.multimesh.mesh = bolt_mesh
-    add_child(Bolt_Visuals)
+	Bolt_Visuals.multimesh.mesh = bolt_mesh
+	add_child(Bolt_Visuals)
 
 
 func _configure_bullet_pool() -> void:
@@ -310,76 +310,76 @@ func _configure_bullet_pool() -> void:
 
 
 func _setup_reload_visuals() -> void:
-    Reload_Pulse_Visuals = MultiMeshInstance3D.new()
-    Reload_Pulse_Visuals.name = "Runtime_Reload_Visuals"
-    var reload_mm : MultiMesh = MultiMesh.new()
-    reload_mm.transform_format = MultiMesh.TRANSFORM_3D
-    reload_mm.instance_count = 0
-    Reload_Pulse_Visuals.multimesh = reload_mm
+	Reload_Pulse_Visuals = MultiMeshInstance3D.new()
+	Reload_Pulse_Visuals.name = "Runtime_Reload_Visuals"
+	var reload_mm : MultiMesh = MultiMesh.new()
+	reload_mm.transform_format = MultiMesh.TRANSFORM_3D
+	reload_mm.instance_count = 0
+	Reload_Pulse_Visuals.multimesh = reload_mm
 
-    var reload_mesh : SphereMesh = SphereMesh.new()
-    reload_mesh.radius = reload_pulse_radius
-    reload_mesh.height = reload_pulse_radius * 2.0
-    reload_mesh.radial_segments = 8
-    reload_mesh.rings = 6
+	var reload_mesh : SphereMesh = SphereMesh.new()
+	reload_mesh.radius = reload_pulse_radius
+	reload_mesh.height = reload_pulse_radius * 2.0
+	reload_mesh.radial_segments = 8
+	reload_mesh.rings = 6
 
-    var reload_mat : StandardMaterial3D = StandardMaterial3D.new()
-    reload_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-    reload_mat.emission_enabled = true
-    reload_mat.emission = Color(0.35, 1.0, 0.35)
-    reload_mat.emission_energy_multiplier = 1.0
-    reload_mat.albedo_color = Color(0.35, 1.0, 0.35, 0.6)
-    reload_mesh.material = reload_mat
+	var reload_mat : StandardMaterial3D = StandardMaterial3D.new()
+	reload_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	reload_mat.emission_enabled = true
+	reload_mat.emission = Color(0.35, 1.0, 0.35)
+	reload_mat.emission_energy_multiplier = 1.0
+	reload_mat.albedo_color = Color(0.35, 1.0, 0.35, 0.6)
+	reload_mesh.material = reload_mat
 
-    Reload_Pulse_Visuals.multimesh.mesh = reload_mesh
-    add_child(Reload_Pulse_Visuals)
+	Reload_Pulse_Visuals.multimesh.mesh = reload_mesh
+	add_child(Reload_Pulse_Visuals)
 
 
 func _get_planet_radius(planet: MeshInstance3D) -> float:
-    if planet.mesh == null:
-        return 1.0
-    if planet.mesh is SphereMesh:
-        var sphere_mesh : SphereMesh = planet.mesh as SphereMesh
-        var max_scale : float = max(planet.scale.x, max(planet.scale.y, planet.scale.z))
-        return max(0.05, sphere_mesh.radius * max_scale)
-    var aabb : AABB = planet.mesh.get_aabb()
-    var max_extent : float = max(aabb.size.x, max(aabb.size.y, aabb.size.z))
-    var fallback_scale : float = max(planet.scale.x, max(planet.scale.y, planet.scale.z))
-    return max(0.05, (max_extent * 0.5) * fallback_scale)
+	if planet.mesh == null:
+		return 1.0
+	if planet.mesh is SphereMesh:
+		var sphere_mesh : SphereMesh = planet.mesh as SphereMesh
+		var max_scale : float = max(planet.scale.x, max(planet.scale.y, planet.scale.z))
+		return max(0.05, sphere_mesh.radius * max_scale)
+	var aabb : AABB = planet.mesh.get_aabb()
+	var max_extent : float = max(aabb.size.x, max(aabb.size.y, aabb.size.z))
+	var fallback_scale : float = max(planet.scale.x, max(planet.scale.y, planet.scale.z))
+	return max(0.05, (max_extent * 0.5) * fallback_scale)
 
 
 func is_alive(entity_index: int) -> bool:
-    if entity_index < ALL_ENTITIES_ent.size():
-        return ALL_ENTITIES_ent[entity_index] != 0
-    printerr("OH CRAP! Our entities are too small, we gotta resize!")
-    Refresh_Entities()
-    return false
+	if entity_index < ALL_ENTITIES_ent.size():
+		return ALL_ENTITIES_ent[entity_index] != 0
+	printerr("OH CRAP! Our entities are too small, we gotta resize!")
+	Refresh_Entities()
+	return false
 
 
 func is_friendly(entity_index: int) -> bool:
-    return entity_index < max_friendly_count
+	return entity_index < max_friendly_count
 
 
 func is_enemy(entity_index: int) -> bool:
-    return entity_index >= max_friendly_count
+	return entity_index >= max_friendly_count
 
 
 func get_boid_transform(entity_index: int) -> Transform3D:
-    if is_alive(entity_index) == false:
-        return Transform3D.IDENTITY
-    if is_friendly(entity_index):
-        return Friendly_MultiMesh.multimesh.get_instance_transform(entity_index)
-    return Enemy_MultiMesh.multimesh.get_instance_transform(entity_index - max_friendly_count)
+	if is_alive(entity_index) == false:
+		return Transform3D.IDENTITY
+	if is_friendly(entity_index):
+		return Friendly_MultiMesh.multimesh.get_instance_transform(entity_index)
+	return Enemy_MultiMesh.multimesh.get_instance_transform(entity_index - max_friendly_count)
 
 
 var temp_buffer : PackedByteArray
 func count_free_spots(friendly_spots : bool) -> int:
-    temp_buffer.clear()
-    if friendly_spots:
-        temp_buffer.slice(0, max_friendly_count)
-    else:
-        temp_buffer.slice(max_friendly_count)
-    return temp_buffer.count(0)
+	temp_buffer.clear()
+	if friendly_spots:
+		temp_buffer.slice(0, max_friendly_count)
+	else:
+		temp_buffer.slice(max_friendly_count)
+	return temp_buffer.count(0)
 
 
 var frame_fence : int = 0
@@ -395,84 +395,84 @@ var update_physics_score : float = 1
 
 
 func _process(delta: float) -> void:
-    if not inited:
-        return
+	if not inited:
+		return
 
-    if keep_spawning_f:
-        keep_spawning_f = spawn_friendly()
-        french += 1
-        if keep_spawning_f == false:
-            print("STOPPED FRENCH")
+	if keep_spawning_f:
+		keep_spawning_f = spawn_friendly()
+		french += 1
+		if keep_spawning_f == false:
+			print("STOPPED FRENCH")
 
-    if keep_spawning_e:
-        keep_spawning_e = spawn_enemy()
-        eeees += 1
-        if keep_spawning_e == false:
-            print("STOPPED ESTONIA")
+	if keep_spawning_e:
+		keep_spawning_e = spawn_enemy()
+		eeees += 1
+		if keep_spawning_e == false:
+			print("STOPPED ESTONIA")
 
-    cam_point = get_boid_transform(max_friendly_count)
-    frame_fence += 1
+	cam_point = get_boid_transform(max_friendly_count)
+	frame_fence += 1
 
-    if Override_Camera != null:
-        $Camera3D.global_position = cam_point.origin - cam_point.basis.z + cam_point.basis.y
-        $Camera3D.look_at(cam_point.origin, Vector3.UP)
-        $Camera3D/Label.text = "FPS: " + str(Engine.get_frames_per_second()) + "\nFriendly Boids: " + str(french - 1) + "\nEnemy Boids: " + str(eeees - 1) + "\nPhysics FPS: " + str(Engine.physics_ticks_per_second)
-        $Camera3D/Label.text += "\nPhysics Update Tick score: " + str(update_physics_score) + "\nPhysics Frame Fence: " + str(physics_fence) + "/" + str(int(frames_before_change * update_physics_score)) + "\nPhysics fps next change: " + str(clamp(int(starting_physics_tick * update_physics_score), 1, starting_physics_tick))
-        $Camera3D/Label.text += "\nAwful frame drops: " + str(frame_time_switches)
-        $Camera3D/Label.text += "\nUsing Offbrand Physics DLSS?: " + str(offbrand_physics_DLSS)
+	if Override_Camera != null:
+		$Camera3D.global_position = cam_point.origin - cam_point.basis.z + cam_point.basis.y
+		$Camera3D.look_at(cam_point.origin, Vector3.UP)
+		$Camera3D/Label.text = "FPS: " + str(Engine.get_frames_per_second()) + "\nFriendly Boids: " + str(french - 1) + "\nEnemy Boids: " + str(eeees - 1) + "\nPhysics FPS: " + str(Engine.physics_ticks_per_second)
+		$Camera3D/Label.text += "\nPhysics Update Tick score: " + str(update_physics_score) + "\nPhysics Frame Fence: " + str(physics_fence) + "/" + str(int(frames_before_change * update_physics_score)) + "\nPhysics fps next change: " + str(clamp(int(starting_physics_tick * update_physics_score), 1, starting_physics_tick))
+		$Camera3D/Label.text += "\nAwful frame drops: " + str(frame_time_switches)
+		$Camera3D/Label.text += "\nUsing Offbrand Physics DLSS?: " + str(offbrand_physics_DLSS)
 
-    if try_hit_60:
-        struggling_level = int(Engine.get_frames_per_second() / 10)
-        if struggling_level <= 1:
-            update_physics_score = 0.01
-            Engine.max_physics_steps_per_frame = 1
-            physics_fence = frames_before_change
-            frame_time_switches += 100
-        elif struggling_level < 2:
-            update_physics_score -= 0.005
-            frame_time_switches += 50
-        elif struggling_level < 3:
-            update_physics_score -= 0.0002
-            frame_time_switches += 1
-        elif struggling_level < 4:
-            Engine.max_physics_steps_per_frame = 2
-            update_physics_score += 0.0001
-            frame_time_switches -= 1
-        elif struggling_level < 5:
-            Engine.max_physics_steps_per_frame = 3
-            update_physics_score += 0.0003
-            frame_time_switches -= 2
-        elif struggling_level < 7:
-            update_physics_score += 0.001
-            frame_time_switches -= 3
-        else:
-            update_physics_score += 0.005
-            frame_time_switches -= int(1 * Engine.physics_ticks_per_second)
+	if try_hit_60:
+		struggling_level = int(Engine.get_frames_per_second() / 10)
+		if struggling_level <= 1:
+			update_physics_score = 0.01
+			Engine.max_physics_steps_per_frame = 1
+			physics_fence = frames_before_change
+			frame_time_switches += 100
+		elif struggling_level < 2:
+			update_physics_score -= 0.005
+			frame_time_switches += 50
+		elif struggling_level < 3:
+			update_physics_score -= 0.0002
+			frame_time_switches += 1
+		elif struggling_level < 4:
+			Engine.max_physics_steps_per_frame = 2
+			update_physics_score += 0.0001
+			frame_time_switches -= 1
+		elif struggling_level < 5:
+			Engine.max_physics_steps_per_frame = 3
+			update_physics_score += 0.0003
+			frame_time_switches -= 2
+		elif struggling_level < 7:
+			update_physics_score += 0.001
+			frame_time_switches -= 3
+		else:
+			update_physics_score += 0.005
+			frame_time_switches -= int(1 * Engine.physics_ticks_per_second)
 
-        frame_time_switches = clamp(frame_time_switches, -10000, 10000)
-        update_physics_score = clampf(update_physics_score, 0.01, 1)
+		frame_time_switches = clamp(frame_time_switches, -10000, 10000)
+		update_physics_score = clampf(update_physics_score, 0.01, 1)
 
-        if physics_fence >= (frames_before_change * update_physics_score):
-            physics_fence = 0
+		if physics_fence >= (frames_before_change * update_physics_score):
+			physics_fence = 0
 
-        if frame_time_switches > 5000 and offbrand_physics_DLSS == false:
-            printerr("Sorry bud, performance is too jittery no matter what we do, switching to hacky low performance mode")
-            offbrand_physics_DLSS = true
-        if frame_time_switches < 0 and offbrand_physics_DLSS:
-            print("performance seems to be better, going back to better boids")
-            offbrand_physics_DLSS = false
-    else:
-        Engine.max_physics_steps_per_frame = 3
-        update_physics_score = 1
+		if frame_time_switches > 5000 and offbrand_physics_DLSS == false:
+			printerr("Sorry bud, performance is too jittery no matter what we do, switching to hacky low performance mode")
+			offbrand_physics_DLSS = true
+		if frame_time_switches < 0 and offbrand_physics_DLSS:
+			print("performance seems to be better, going back to better boids")
+			offbrand_physics_DLSS = false
+	else:
+		Engine.max_physics_steps_per_frame = 3
+		update_physics_score = 1
 
-    Engine.physics_ticks_per_second = clamp(int(starting_physics_tick * update_physics_score), 1, starting_physics_tick)
+	Engine.physics_ticks_per_second = clamp(int(starting_physics_tick * update_physics_score), 1, starting_physics_tick)
 
-    if frame_fence % 800 == 0:
-        print("FPS: " + str(Engine.get_frames_per_second()))
-        print("Homies: " + str(Friendly_MultiMesh.multimesh.instance_count) + "\tbuffer size: " + str(Friendly_MultiMesh.multimesh.buffer.size()))
-        print("Enemies: " + str(Enemy_MultiMesh.multimesh.instance_count) + "\tbuffer size: " + str(Enemy_MultiMesh.multimesh.buffer.size()))
-        print("Total: " + str(ALL_ENTITIES_ent.size()) + "\t Velocities too: " + str(VELOCITIES_comp.size()))
-        frame_fence = 0
+	if frame_fence % 800 == 0:
+		print("FPS: " + str(Engine.get_frames_per_second()))
+		print("Homies: " + str(Friendly_MultiMesh.multimesh.instance_count) + "\tbuffer size: " + str(Friendly_MultiMesh.multimesh.buffer.size()))
+		print("Enemies: " + str(Enemy_MultiMesh.multimesh.instance_count) + "\tbuffer size: " + str(Enemy_MultiMesh.multimesh.buffer.size()))
+		print("Total: " + str(ALL_ENTITIES_ent.size()) + "\t Velocities too: " + str(VELOCITIES_comp.size()))
+		frame_fence = 0
 
 
 var force : Vector3
@@ -485,41 +485,41 @@ var physics_fence : int = 0
 
 
 func _physics_process(delta: float) -> void:
-    physics_fence += 1
+	physics_fence += 1
 
-    for ent in range(Max_Num_Boids):
-        if inited and is_alive(ent) == false:
-            continue
+	for ent in range(Max_Num_Boids):
+		if inited and is_alive(ent) == false:
+			continue
 
-        new_trans = get_boid_transform(ent)
-        var ship_pos : Vector3 = new_trans.origin
-        var ship_vel : Vector3 = VELOCITIES_comp[ent]
+		new_trans = get_boid_transform(ent)
+		var ship_pos : Vector3 = new_trans.origin
+		var ship_vel : Vector3 = VELOCITIES_comp[ent]
 
-        # Every ship regularly checks if a better target exists.
-        ALL_ENTITY_TARGET_RECHECK_TIMER_comp[ent] -= delta
-        if ALL_ENTITY_TARGET_RECHECK_TIMER_comp[ent] <= 0.0:
-            _repick_target(ent)
-            ALL_ENTITY_TARGET_RECHECK_TIMER_comp[ent] = target_recheck_seconds
+		# Every ship regularly checks if a better target exists.
+		ALL_ENTITY_TARGET_RECHECK_TIMER_comp[ent] -= delta
+		if ALL_ENTITY_TARGET_RECHECK_TIMER_comp[ent] <= 0.0:
+			_repick_target(ent)
+			ALL_ENTITY_TARGET_RECHECK_TIMER_comp[ent] = target_recheck_seconds
 
-        var avoid_force_data : Dictionary = _calculate_dont_crash_force(ship_pos, ship_vel)
-        var avoid_force : Vector3 = avoid_force_data.force
-        var is_too_close_to_planet : bool = avoid_force_data.too_close
+		var avoid_force_data : Dictionary = _calculate_dont_crash_force(ship_pos, ship_vel)
+		var avoid_force : Vector3 = avoid_force_data.force
+		var is_too_close_to_planet : bool = avoid_force_data.too_close
 
-        var steer_force : Vector3 = Vector3.ZERO
-        var desired_force : Vector3 = Vector3.ZERO
-        var avoid_weight : float = dont_crash_weight
+		var steer_force : Vector3 = Vector3.ZERO
+		var desired_force : Vector3 = Vector3.ZERO
+		var avoid_weight : float = dont_crash_weight
 
-        if ALL_ENTITY_AMMOS_comp[ent] < 0:
-            var mothership : Node3D = Friendly_MotherShip if is_friendly(ent) else Enemy_MotherShip
-            if mothership != null:
-                desired_force = _arrive_force(ship_pos, mothership.global_position, ship_vel, arrive_slowing_distance)
-                _process_reload_logic(ent, ship_pos, mothership.global_position, delta)
-            steer_force = desired_force * return_weight + avoid_force * avoid_weight
-        else:
-            var target_pos : Vector3 = _get_current_target_position(ent, ship_pos)
-            desired_force = _seek_force(ship_pos, target_pos, ship_vel)
+		if ALL_ENTITY_AMMOS_comp[ent] < 0:
+			var mothership : Node3D = Friendly_MotherShip if is_friendly(ent) else Enemy_MotherShip
+			if mothership != null:
+				desired_force = _arrive_force(ship_pos, mothership.global_position, ship_vel, arrive_slowing_distance)
+				_process_reload_logic(ent, ship_pos, mothership.global_position, delta)
+			steer_force = desired_force * return_weight + avoid_force * avoid_weight
+		else:
+			var target_pos : Vector3 = _get_current_target_position(ent, ship_pos)
+			desired_force = _seek_force(ship_pos, target_pos, ship_vel)
 
-            # If we're super close to a planet, crash-avoidance should overpower seek/pursue.
+			# If we're super close to a planet, crash-avoidance should overpower seek/pursue.
             if is_too_close_to_planet:
                 avoid_weight *= near_crash_multiplier
                 steer_force = desired_force * (seek_weight * 0.15) + avoid_force * avoid_weight
