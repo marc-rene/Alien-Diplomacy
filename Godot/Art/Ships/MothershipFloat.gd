@@ -1,4 +1,4 @@
-extends Node3D
+extends "res://Scripts/Damagable.gd"
 class_name MothershipFloat
 
 enum FloatMode {

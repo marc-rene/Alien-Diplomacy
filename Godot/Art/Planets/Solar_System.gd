@@ -1,6 +1,8 @@
-extends Node3D
+extends "res://Scripts/Damagable.gd"
+class_name Solar_System
 
 @export var Spinny_Amount : float = 0.01
+
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
