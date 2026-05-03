@@ -16,9 +16,8 @@ func _ready() -> void:
 		aiChat = ClassDB.instantiate("NobodyWhoChat")
 		aiChat.name = "NobodyWhoChat"
 		aiChat.set("system_prompt", "You are a space pirate")
+		aiChat.set("model_node", model_node)
 		add_child(aiChat)
-		# Set model_node path after both are in the tree
-		aiChat.set("model_node", NodePath("../NobodyWhoModel"))
 
 		aiChat.connect("response_updated", _on_nobody_who_chat_response_updated)
 		aiChat.connect("response_finished", _on_nobody_who_chat_response_finished)
