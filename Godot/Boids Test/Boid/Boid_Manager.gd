@@ -46,6 +46,7 @@ var max_friendly_count : int = 0
 @export var fire_rate_seconds : float = 0.1 # 1 bullet every 100ms
 @export var bullet_speed : float = 3.0
 @export var bullet_lifetime : float = 2.0
+@export_range(0, 500000, 1) var bullet_pool_size : int = 0 # 0 = auto-size based on fire-rate/lifetime
 @export var bullet_ship_hit_radius : float = 0.8
 @export var bullet_damage_to_ships : int = 4
 @export var bullet_damage_to_planets : int = 1
@@ -73,7 +74,8 @@ var use_prev_buffer : bool = true
 
 static var boid_manager_instance : Boid_Manager
 
-static func Is_Using_Offbrand_Physics_DLSS() -> bool:                                                                                   	return boid_manager_instance.offbrand_physics_DLSS
+static func Is_Using_Offbrand_Physics_DLSS() -> bool: 
+    return boid_manager_instance.offbrand_physics_DLSS
 
 static func How_Many_Boids() -> int:
     return boid_manager_instance.Max_Num_Boids
@@ -122,6 +124,8 @@ var BULLET_LIFETIMES_comp : Array[float] = []
 var BULLET_OWNERS_comp : Array[int] = []
 var BULLET_TARGET_comp : Array[int] = []
 var BULLET_TARGET_KIND_comp : Array[int] = [] # 0=ship,1=planet
+var BULLET_ACTIVE_COUNT : int = 0
+var BULLET_CAPACITY : int = 0
 
 var Bolt_Visuals : MultiMeshInstance3D
 var Reload_Pulse_Visuals : MultiMeshInstance3D
@@ -172,6 +176,7 @@ func Refresh_Entities():
     prev_friend_mesh_push_buffer.resize(max_friendly_count * 12)
     temp_enemy_mesh_push_buffer.resize((Max_Num_Boids - max_friendly_count) * 12)
     prev_enemy_mesh_push_buffer.resize((Max_Num_Boids - max_friendly_count) * 12)
+    _configure_bullet_pool()
 
     print("Max num of boids: %d\n\tFriendly boids: %d\n\tEnemy boids: %d" % [ALL_ENTITIES_ent.size(), max_friendly_count, Max_Num_Boids - max_friendly_count])
 
@@ -214,6 +219,7 @@ func _ready():
     Refresh_Entities()
     _resolve_scene_refs()
     _setup_bolt_visuals()
+    _configure_bullet_pool()
     _setup_reload_visuals()
 
 
@@ -256,6 +262,7 @@ func _setup_bolt_visuals() -> void:
     var bolt_mm : MultiMesh = MultiMesh.new()
     bolt_mm.transform_format = MultiMesh.TRANSFORM_3D
     bolt_mm.instance_count = 0
+    bolt_mm.visible_instance_count = 0
     Bolt_Visuals.multimesh = bolt_mm
 
     var bolt_mesh : SphereMesh = SphereMesh.new()
@@ -274,6 +281,32 @@ func _setup_bolt_visuals() -> void:
 
     Bolt_Visuals.multimesh.mesh = bolt_mesh
     add_child(Bolt_Visuals)
+
+
+func _configure_bullet_pool() -> void:
+    var shots_per_ship_in_flight : int = int(ceil(bullet_lifetime / max(fire_rate_seconds, 0.001))) + 1
+    var auto_capacity : int = max(1, Max_Num_Boids * max(1, shots_per_ship_in_flight))
+    BULLET_CAPACITY = bullet_pool_size if bullet_pool_size > 0 else auto_capacity
+
+    BULLET_POSITIONS_comp.resize(BULLET_CAPACITY)
+    BULLET_VELOCITIES_comp.resize(BULLET_CAPACITY)
+    BULLET_LIFETIMES_comp.resize(BULLET_CAPACITY)
+    BULLET_OWNERS_comp.resize(BULLET_CAPACITY)
+    BULLET_TARGET_KIND_comp.resize(BULLET_CAPACITY)
+    BULLET_TARGET_comp.resize(BULLET_CAPACITY)
+
+    for i in range(BULLET_CAPACITY):
+        BULLET_POSITIONS_comp[i] = Vector3.ZERO
+        BULLET_VELOCITIES_comp[i] = Vector3.ZERO
+        BULLET_LIFETIMES_comp[i] = 0.0
+        BULLET_OWNERS_comp[i] = -1
+        BULLET_TARGET_KIND_comp[i] = 0
+        BULLET_TARGET_comp[i] = -1
+
+    BULLET_ACTIVE_COUNT = 0
+    if Bolt_Visuals != null and Bolt_Visuals.multimesh != null:
+        Bolt_Visuals.multimesh.instance_count = BULLET_CAPACITY
+        Bolt_Visuals.multimesh.visible_instance_count = 0
 
 
 func _setup_reload_visuals() -> void:
@@ -593,26 +626,38 @@ func _process_ship_fire(ent: int, ship_transform: Transform3D, target_pos: Vecto
         ALL_ENTITY_FIRE_COOLDOWN_comp[ent] += fire_rate_seconds
 
     var ship_vel : Vector3 = VELOCITIES_comp[ent]
-    var shot_dir : Vector3 = ship_vel.normalized()
+    var shot_dir : Vector3 = (target_pos - ship_transform.origin).normalized()
     if shot_dir.length_squared() < 0.001:
-        shot_dir = (target_pos - ship_transform.origin).normalized()
+        shot_dir = ship_vel.normalized()
     if shot_dir.length_squared() < 0.001:
         shot_dir = -ship_transform.basis.z.normalized()
+
+    # Bullet world velocity is a snapshot at fire time:
+    # inherited ship momentum + muzzle velocity along shot direction.
+    var bullet_world_velocity : Vector3 = ship_vel + (shot_dir * bullet_speed)
+    if bullet_world_velocity.length_squared() < 0.00001:
+        bullet_world_velocity = shot_dir * bullet_speed
 
     var owner_team : int = 0 if is_friendly(ent) else 1
     var target_kind : int = ALL_ENTITY_TARGET_KIND_comp[ent]
     var target_index : int = ALL_ENTITY_TARGET_INDEX_comp[ent]
-    _spawn_bullet(ship_transform.origin, shot_dir * bullet_speed, owner_team, target_kind, target_index)
+    _spawn_bullet(ship_transform.origin, bullet_world_velocity, owner_team, target_kind, target_index)
     ALL_ENTITY_AMMOS_comp[ent] -= 1
 
 
 func _spawn_bullet(pos: Vector3, vel: Vector3, owner_team: int, target_kind: int, target_index: int) -> void:
-    BULLET_POSITIONS_comp.push_back(pos)
-    BULLET_VELOCITIES_comp.push_back(vel)
-    BULLET_LIFETIMES_comp.push_back(bullet_lifetime)
-    BULLET_OWNERS_comp.push_back(owner_team)
-    BULLET_TARGET_KIND_comp.push_back(target_kind)
-    BULLET_TARGET_comp.push_back(target_index)
+    if BULLET_ACTIVE_COUNT >= BULLET_CAPACITY:
+        return
+
+    var bullet_index : int = BULLET_ACTIVE_COUNT
+    BULLET_ACTIVE_COUNT += 1
+
+    BULLET_POSITIONS_comp[bullet_index] = pos
+    BULLET_VELOCITIES_comp[bullet_index] = vel
+    BULLET_LIFETIMES_comp[bullet_index] = bullet_lifetime
+    BULLET_OWNERS_comp[bullet_index] = owner_team
+    BULLET_TARGET_KIND_comp[bullet_index] = target_kind
+    BULLET_TARGET_comp[bullet_index] = target_index
 
     # If a particles node exists in scene, emit once for muzzle flash vibe.
     if has_node(canons_node_name):
@@ -623,10 +668,10 @@ func _spawn_bullet(pos: Vector3, vel: Vector3, owner_team: int, target_kind: int
 
 
 func _update_bullets(delta: float) -> void:
-    for i in range(BULLET_POSITIONS_comp.size() - 1, -1, -1):
+    for i in range(BULLET_ACTIVE_COUNT - 1, -1, -1):
         BULLET_LIFETIMES_comp[i] -= delta
         if BULLET_LIFETIMES_comp[i] <= 0.0:
-            _remove_bullet(i)
+            _remove_bullet_swap(i)
             continue
 
         BULLET_POSITIONS_comp[i] += BULLET_VELOCITIES_comp[i] * delta
@@ -646,7 +691,7 @@ func _update_bullets(delta: float) -> void:
                 on_hit_ship(target_index, bullet_damage_to_ships, owner_team)
 
         if did_hit:
-            _remove_bullet(i)
+            _remove_bullet_swap(i)
 
     _render_bullets()
 
@@ -654,20 +699,27 @@ func _update_bullets(delta: float) -> void:
 func _render_bullets() -> void:
     if Bolt_Visuals == null or Bolt_Visuals.multimesh == null:
         return
-    var count : int = BULLET_POSITIONS_comp.size()
-    Bolt_Visuals.multimesh.instance_count = count
+    var count : int = BULLET_ACTIVE_COUNT
+    if Bolt_Visuals.multimesh.instance_count != BULLET_CAPACITY:
+        Bolt_Visuals.multimesh.instance_count = BULLET_CAPACITY
+    Bolt_Visuals.multimesh.visible_instance_count = count
     for i in range(count):
         var t : Transform3D = Transform3D(Basis.IDENTITY, BULLET_POSITIONS_comp[i])
         Bolt_Visuals.multimesh.set_instance_transform(i, t)
 
 
-func _remove_bullet(index: int) -> void:
-    BULLET_POSITIONS_comp.remove_at(index)
-    BULLET_VELOCITIES_comp.remove_at(index)
-    BULLET_LIFETIMES_comp.remove_at(index)
-    BULLET_OWNERS_comp.remove_at(index)
-    BULLET_TARGET_KIND_comp.remove_at(index)
-    BULLET_TARGET_comp.remove_at(index)
+func _remove_bullet_swap(index: int) -> void:
+    var last_index : int = BULLET_ACTIVE_COUNT - 1
+    if index < 0 or index > last_index:
+        return
+    if index != last_index:
+        BULLET_POSITIONS_comp[index] = BULLET_POSITIONS_comp[last_index]
+        BULLET_VELOCITIES_comp[index] = BULLET_VELOCITIES_comp[last_index]
+        BULLET_LIFETIMES_comp[index] = BULLET_LIFETIMES_comp[last_index]
+        BULLET_OWNERS_comp[index] = BULLET_OWNERS_comp[last_index]
+        BULLET_TARGET_KIND_comp[index] = BULLET_TARGET_KIND_comp[last_index]
+        BULLET_TARGET_comp[index] = BULLET_TARGET_comp[last_index]
+    BULLET_ACTIVE_COUNT -= 1
 
 
 func _bullet_hit_planet(bullet_pos: Vector3, planet_index: int) -> bool:

@@ -249,7 +249,7 @@ mass = 20.0
 reload_distance = 1.0
 reload_time_required = 5.0
 fire_rate_seconds = 0.5
-bullet_speed = 0.1
+bullet_speed = 2.0
 planet_hit_pulse_duration = 0.5
 bolt_visual_radius = 0.01
 
