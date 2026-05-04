@@ -244,60 +244,31 @@ unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.9779003, -4.4441123)
 script = ExtResource("2_3qyon")
 Spinny_Amount = 0.03
-Max_Health = null
 Can_Be_Damaged = false
 
 [node name="PlanetEarthy" parent="OffbrandSolarSystem" unique_id=732950670 instance=ExtResource("2_7fr83")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.184404, 0.90681136, -10.03336)
 Spinny_Amount = 0.5
-Max_Health = null
-Can_Be_Damaged = null
 
 [node name="PlanetMoony" parent="OffbrandSolarSystem" unique_id=1810502287 instance=ExtResource("3_tkmsp")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.945059, 3.3648312, 4.429068)
 Spinny_Amount = 1.4
-Max_Health = null
-Can_Be_Damaged = null
 
 [node name="PlanetKnockOffJupiter" parent="OffbrandSolarSystem" unique_id=1882243003 instance=ExtResource("4_qtktj")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.4640985, 1.8908012, 9.424419)
 Spinny_Amount = 0.3
-Max_Health = null
-Can_Be_Damaged = null
 
 [node name="THE GODDAMN SUN" parent="OffbrandSolarSystem" unique_id=1124456154 instance=ExtResource("5_654x7")]
 Spinny_Amount = 0.1
-Max_Health = null
-Can_Be_Damaged = null
 
 [node name="Boid Manager" type="Node3D" parent="." unique_id=878142912 node_paths=PackedStringArray("Friendly_Spawn_Point", "Friendly_MultiMesh", "Friendly_Bolts_MultiMesh", "Enemy_Spawn_Point", "Enemy_MultiMesh")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.090516, 0, 0)
 script = ExtResource("7_kj35w")
-MAX_NUMBER_OF_BOIDS = null
-Friendly_Enemy_Count_Ratio = null
-All_Bolts_Lifetimes = null
 Friendly_Spawn_Point = NodePath("../Friendly MotherShip")
 Friendly_MultiMesh = NodePath("Friendly_mult_mesh")
 Friendly_Bolts_MultiMesh = NodePath("Friendly_mult_mesh")
 Enemy_Spawn_Point = NodePath("../Enemy MotherShip")
-Enemy_Spawn_Pool_Amount = null
 Enemy_MultiMesh = NodePath("Enemy_mult_mesh")
-max_speed = null
-max_force = null
-banking = null
-mass = null
-arrive_slowing_distance = null
-reload_distance = null
-reload_time_required = null
-Friendly_Firing_Distance = null
-Enemy_Firing_Distance = null
-Friendly_Firing_Starting_Speed = null
-Enemy_Firing_Starting_Speed = null
-Friendly_Ammo_Capacity = null
-Enemy_Ammo_Capacity = null
-Friendly_Respawn_Time = null
-Enemy_Respawn_Time = null
-target_recheck_seconds = null
 
 [node name="Friendly_Ship" parent="Boid Manager" unique_id=435205655 instance=ExtResource("6_654x7")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -100, 0)
@@ -335,25 +306,8 @@ draw_pass_1 = SubResource("QuadMesh_v4hrs")
 [node name="Friendly MotherShip" type="Node3D" parent="." unique_id=1224971762 node_paths=PackedStringArray("DEBUG_Marker_Mesh", "Solar_System_Root")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.588807, 0, -8.413261)
 script = ExtResource("13_u3x7j")
-mode = null
-movement_speed = null
-rotation_slerp_speed = null
-arrive_distance = null
-repick_seconds = null
-enemy_shell_thickness = null
-friendly_planet_safety_multiplier = null
 DEBUG_Marker_Mesh = NodePath("../Friendly Mothership Debug Target Point")
 Solar_System_Root = NodePath("../OffbrandSolarSystem")
-steering_mass = null
-steering_max_force = null
-steering_seek_weight = null
-steering_avoidance_weight = null
-steering_damping = null
-avoidance_look_ahead = null
-avoidance_radius_multiplier = null
-avoidance_emergency_weight = null
-Max_Health = null
-Can_Be_Damaged = null
 
 [node name="HullEngine" type="MeshInstance3D" parent="Friendly MotherShip" unique_id=892950103]
 transform = Transform3D(0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, 0, 0, 0)
@@ -363,24 +317,8 @@ mesh = SubResource("ArrayMesh_wqxms")
 transform = Transform3D(-0.7392786, 0, 0.6733996, 0, 1, 0, -0.6733996, 0, -0.7392786, 9.221912, 3.530572, 4.77701)
 script = ExtResource("13_u3x7j")
 mode = 1
-movement_speed = null
-rotation_slerp_speed = null
-arrive_distance = null
-repick_seconds = null
-enemy_shell_thickness = null
-friendly_planet_safety_multiplier = null
 DEBUG_Marker_Mesh = NodePath("../Enemy Mothership Debug Target Point")
 Solar_System_Root = NodePath("../OffbrandSolarSystem")
-steering_mass = null
-steering_max_force = null
-steering_seek_weight = null
-steering_avoidance_weight = null
-steering_damping = null
-avoidance_look_ahead = null
-avoidance_radius_multiplier = null
-avoidance_emergency_weight = null
-Max_Health = null
-Can_Be_Damaged = null
 
 [node name="HullEngine" parent="Enemy MotherShip" index="0" unique_id=660548559]
 transform = Transform3D(0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, 0, 0, 0)

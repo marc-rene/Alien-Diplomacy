@@ -89,6 +89,8 @@ const Enemy_Fire_Rate : float = 1.0
 ## How long (seconds) does it take for a boid to respawn and start shooting again
 @export var Friendly_Respawn_Time : float = 5.0
 @export var Enemy_Respawn_Time : float = 5.0
+@export var Enemy_Bolts_Explosion_Radius : float = 5 
+@export var Enemy_Bolts_Explosion_Damage : int = 25
 
 ## Check every X seconds if the target our boid is targetting is still worth it? or should we choose another?
 @export var target_recheck_seconds : float = 5.0
@@ -158,12 +160,21 @@ var _previous_enemy_bolts_transforms_buffer : PackedVector3Array
 var _use_current_buffer_this_frame : bool = true
 
 const DEFAULT_BOID_HEALTH : int = 120
+const RETIRED_BOLT_W : float = -1.0
+const ACTIVE_BOLT_SCALE : float = 1.0
+const RETIRED_BOLT_SCALE : float = 0.00001
 
 
+
+# --- My THREAD of sanity is waining -------------------------------------------
 var FRIENDLY_BOID_MANAGER_THREAD : Thread
 var ENEMY_BOID_MANAGER_THREAD : Thread
 var FRIENDLY_BOID_BOLT_MANAGER_THREAD : Thread
 var ENEMY_BOID_BOLT_MANAGER_THREAD : Thread
+# ------------------------------------------------------------------------------
+
+
+
 
 func _friendly_slots_count() -> int:
     var slots_count : int = int(MAX_NUMBER_OF_BOIDS * Friendly_Enemy_Count_Ratio)
@@ -335,7 +346,45 @@ func _get_bolts_per_boid(for_friendly_boid: bool) -> int:
 
 
 func _is_bolt_slot_inactive(bolt_age: float) -> bool:
-    return bolt_age <= 0.0001 or bolt_age > All_Bolts_Lifetimes
+    return bolt_age < 0.0 or bolt_age > All_Bolts_Lifetimes
+
+
+func _set_bolt_transform_entry(buffer_ref: PackedVector3Array, slot_index: int, origin: Vector3, scale: float) -> PackedVector3Array:
+    var start_index : int = slot_index * 4
+    if (start_index + 3) >= buffer_ref.size():
+        return buffer_ref
+
+    buffer_ref[start_index + 0] = Vector3(scale, 0.0, 0.0)
+    buffer_ref[start_index + 1] = Vector3(0.0, scale, 0.0)
+    buffer_ref[start_index + 2] = Vector3(0.0, 0.0, scale)
+    buffer_ref[start_index + 3] = origin
+    return buffer_ref
+
+
+func _set_bolt_transform_slot(slot_index: int, for_friendly: bool, origin: Vector3, scale: float, set_current: bool, set_previous: bool) -> void:
+    if for_friendly:
+        if set_current:
+            _current_friendly_bolts_transforms_buffer = _set_bolt_transform_entry(_current_friendly_bolts_transforms_buffer, slot_index, origin, scale)
+        if set_previous:
+            _previous_friendly_bolts_transforms_buffer = _set_bolt_transform_entry(_previous_friendly_bolts_transforms_buffer, slot_index, origin, scale)
+    else:
+        if set_current:
+            _current_enemy_bolts_transforms_buffer = _set_bolt_transform_entry(_current_enemy_bolts_transforms_buffer, slot_index, origin, scale)
+        if set_previous:
+            _previous_enemy_bolts_transforms_buffer = _set_bolt_transform_entry(_previous_enemy_bolts_transforms_buffer, slot_index, origin, scale)
+
+
+func _get_bolt_origin(slot_index: int, for_friendly: bool, from_current_buffer: bool) -> Vector3:
+    var source_buffer : PackedVector3Array
+    if for_friendly:
+        source_buffer = _current_friendly_bolts_transforms_buffer if from_current_buffer else _previous_friendly_bolts_transforms_buffer
+    else:
+        source_buffer = _current_enemy_bolts_transforms_buffer if from_current_buffer else _previous_enemy_bolts_transforms_buffer
+
+    var origin_index : int = (slot_index * 4) + 3
+    if origin_index >= source_buffer.size():
+        return Vector3.ZERO
+    return source_buffer[origin_index]
  
 
 ## TODO: Get the current transform of the boid who fired, get its velocity, 
@@ -404,8 +453,11 @@ func Fire_Bolt(Which_boid_is_Firing : int) -> bool:
         selected_slot_index = smallest_active_age_slot
 
     var boid_velocity : Vector3 = Velocities_COMP[Which_boid_is_Firing]
+    var boid_transform : Transform3D = _get_boid_transform(Which_boid_is_Firing)
+    var bolt_spawn_origin : Vector3 = boid_transform.origin
     var bolt_velocity : Vector3 = boid_velocity * firing_speed
-    bolts_velocity_comp[selected_slot_index] = Vector4(bolt_velocity.x, bolt_velocity.y, bolt_velocity.z, 0.000001)
+    bolts_velocity_comp[selected_slot_index] = Vector4(bolt_velocity.x, bolt_velocity.y, bolt_velocity.z, 0.0)
+    _set_bolt_transform_slot(selected_slot_index, is_friendly, bolt_spawn_origin, ACTIVE_BOLT_SCALE, true, true)
 
     if is_friendly:
         Friendly_Bolts_Velocities_COMP = bolts_velocity_comp
@@ -417,7 +469,40 @@ func Fire_Bolt(Which_boid_is_Firing : int) -> bool:
     Ammo_COMP.set(Which_boid_is_Firing, ammo_left)
     return true
                
-            
+          
+## TODO: When a Bolt has been fired over All_Bolts_Lifetimes seconds ago, it must be retired.
+## Because we're dealing with Transform3D for our multmesh, and we're updating them via packedVector3array,
+## an old retired bolt should continue on it's trajectory for a frame but then have it's scale set to 0.00001 
+## because we'll be lerping from one buffer to another. an active bolt will have a scale of 1, 
+## and a W component of less than All_Bolts_Lifetimes
+func Retire_old_Bolt(do_friendly_bolts : bool) -> void:
+    if do_friendly_bolts:
+        var friendly_slot_index : int = 0
+        while friendly_slot_index < Friendly_Bolts_Velocities_COMP.size():
+            var friendly_bolt_data : Vector4 = Friendly_Bolts_Velocities_COMP[friendly_slot_index]
+            var friendly_bolt_age : float = friendly_bolt_data.w
+            if friendly_bolt_age > All_Bolts_Lifetimes:
+                var friendly_bolt_origin : Vector3 = _get_bolt_origin(friendly_slot_index, true, _use_current_buffer_this_frame)
+                _set_bolt_transform_slot(friendly_slot_index, true, friendly_bolt_origin, RETIRED_BOLT_SCALE, _use_current_buffer_this_frame, false)
+                _set_bolt_transform_slot(friendly_slot_index, true, friendly_bolt_origin, ACTIVE_BOLT_SCALE, false, not _use_current_buffer_this_frame)
+                friendly_bolt_data.w = RETIRED_BOLT_W
+                Friendly_Bolts_Velocities_COMP[friendly_slot_index] = friendly_bolt_data
+            friendly_slot_index += 1
+
+    else:
+        var enemy_slot_index : int = 0
+        while enemy_slot_index < Enemy_Bolts_Velocities_COMP.size():
+            var enemy_bolt_data : Vector4 = Enemy_Bolts_Velocities_COMP[enemy_slot_index]
+            var enemy_bolt_age : float = enemy_bolt_data.w
+            if enemy_bolt_age > All_Bolts_Lifetimes:
+                var enemy_bolt_origin : Vector3 = _get_bolt_origin(enemy_slot_index, false, _use_current_buffer_this_frame)
+                _set_bolt_transform_slot(enemy_slot_index, false, enemy_bolt_origin, RETIRED_BOLT_SCALE, _use_current_buffer_this_frame, false)
+                _set_bolt_transform_slot(enemy_slot_index, false, enemy_bolt_origin, ACTIVE_BOLT_SCALE, false, not _use_current_buffer_this_frame)
+                enemy_bolt_data.w = RETIRED_BOLT_W
+                Enemy_Bolts_Velocities_COMP[enemy_slot_index] = enemy_bolt_data
+            enemy_slot_index += 1
+
+  
 func _emit_boid_destroyed_particles(hit_position: Vector3) -> void:
     var particles_node : Node = get_node_or_null("Boid_Explosion_Particles")
     if particles_node == null:
@@ -576,10 +661,45 @@ func _initisalise_packed_arrays():
     enemy_bolts_num = enemy_bolts_num * (All_Bolts_Lifetimes / Enemy_Fire_Rate)
     
     Friendly_Bolts_Velocities_COMP.resize(friendly_bolts_num)
-    Friendly_Bolts_Velocities_COMP.fill(Vector4.ZERO)
+    Friendly_Bolts_Velocities_COMP.fill(Vector4(0.0, 0.0, 0.0, RETIRED_BOLT_W))
     
     Enemy_Bolts_Velocities_COMP.resize(enemy_bolts_num)
-    Enemy_Bolts_Velocities_COMP.fill(Vector4.ZERO)
+    Enemy_Bolts_Velocities_COMP.fill(Vector4(0.0, 0.0, 0.0, RETIRED_BOLT_W))
+
+    var retired_basis_x : Vector3 = Vector3(RETIRED_BOLT_SCALE, 0.0, 0.0)
+    var retired_basis_y : Vector3 = Vector3(0.0, RETIRED_BOLT_SCALE, 0.0)
+    var retired_basis_z : Vector3 = Vector3(0.0, 0.0, RETIRED_BOLT_SCALE)
+    var hidden_origin : Vector3 = Vector3(-999999.0, -999999.0, -999999.0)
+
+    _current_friendly_bolts_transforms_buffer.resize(friendly_bolts_num * 4)
+    _previous_friendly_bolts_transforms_buffer.resize(friendly_bolts_num * 4)
+    var friendly_slot_index : int = 0
+    while friendly_slot_index < friendly_bolts_num:
+        var friendly_base_index : int = friendly_slot_index * 4
+        _current_friendly_bolts_transforms_buffer[friendly_base_index + 0] = retired_basis_x
+        _current_friendly_bolts_transforms_buffer[friendly_base_index + 1] = retired_basis_y
+        _current_friendly_bolts_transforms_buffer[friendly_base_index + 2] = retired_basis_z
+        _current_friendly_bolts_transforms_buffer[friendly_base_index + 3] = hidden_origin
+        _previous_friendly_bolts_transforms_buffer[friendly_base_index + 0] = retired_basis_x
+        _previous_friendly_bolts_transforms_buffer[friendly_base_index + 1] = retired_basis_y
+        _previous_friendly_bolts_transforms_buffer[friendly_base_index + 2] = retired_basis_z
+        _previous_friendly_bolts_transforms_buffer[friendly_base_index + 3] = hidden_origin
+        friendly_slot_index += 1
+
+    _current_enemy_bolts_transforms_buffer.resize(enemy_bolts_num * 4)
+    _previous_enemy_bolts_transforms_buffer.resize(enemy_bolts_num * 4)
+    var enemy_slot_index : int = 0
+    while enemy_slot_index < enemy_bolts_num:
+        var enemy_base_index : int = enemy_slot_index * 4
+        _current_enemy_bolts_transforms_buffer[enemy_base_index + 0] = retired_basis_x
+        _current_enemy_bolts_transforms_buffer[enemy_base_index + 1] = retired_basis_y
+        _current_enemy_bolts_transforms_buffer[enemy_base_index + 2] = retired_basis_z
+        _current_enemy_bolts_transforms_buffer[enemy_base_index + 3] = hidden_origin
+        _previous_enemy_bolts_transforms_buffer[enemy_base_index + 0] = retired_basis_x
+        _previous_enemy_bolts_transforms_buffer[enemy_base_index + 1] = retired_basis_y
+        _previous_enemy_bolts_transforms_buffer[enemy_base_index + 2] = retired_basis_z
+        _previous_enemy_bolts_transforms_buffer[enemy_base_index + 3] = hidden_origin
+        enemy_slot_index += 1
     
     
     
@@ -660,12 +780,101 @@ func _get_enemy_bolts_transform_buffer() -> PackedVector3Array:
     return _previous_enemy_bolts_transforms_buffer
 
 
+func _get_friendly_bolts_transform_buffer() -> PackedVector3Array:
+    if _use_current_buffer_this_frame:
+        return _current_friendly_bolts_transforms_buffer
+    return _previous_friendly_bolts_transforms_buffer
+
+
 func _set_enemy_bolt_slot_inactive(slot_index: int) -> void:
     if slot_index < 0 or slot_index >= Enemy_Bolts_Velocities_COMP.size():
         return
     var slot_velocity : Vector4 = Enemy_Bolts_Velocities_COMP[slot_index]
-    slot_velocity.w = 0.0
+    slot_velocity.w = RETIRED_BOLT_W
     Enemy_Bolts_Velocities_COMP[slot_index] = slot_velocity
+
+
+func _set_friendly_bolt_slot_inactive(slot_index: int) -> void:
+    if slot_index < 0 or slot_index >= Friendly_Bolts_Velocities_COMP.size():
+        return
+    var slot_velocity : Vector4 = Friendly_Bolts_Velocities_COMP[slot_index]
+    slot_velocity.w = RETIRED_BOLT_W
+    Friendly_Bolts_Velocities_COMP[slot_index] = slot_velocity
+
+
+func _apply_enemy_bolt_explosion_damage(explosion_center: Vector3) -> void:
+    var cell_id : int = Spatial_Grid.Get_ID_of_Cell_from_Location(explosion_center)
+    if cell_id == -1:
+        return
+
+    var affected_boids : PackedInt32Array = Spatial_Grid.Get_All_Boids_in_Cell(cell_id, false)
+    var boid_i : int = 0
+    while boid_i < affected_boids.size():
+        var boid_index : int = affected_boids[boid_i]
+        if boid_index >= 0 and boid_index < MAX_NUMBER_OF_BOIDS:
+            var boid_state : E_Boid_State = Get_Boid_State(boid_index)
+            if boid_state == E_Boid_State.FRIENDLY:
+                var boid_position : Vector3 = _get_boid_transform(boid_index).origin
+                var within_explosion_radius : bool = boid_position.distance_to(explosion_center) <= Enemy_Bolts_Explosion_Radius
+                if within_explosion_radius:
+                    Apply_Damage_SYS(boid_index, Enemy_Bolts_Explosion_Damage)
+        boid_i += 1
+
+
+## TODO: Cycle through all friendly bolts and check their XYZ position and see if
+## any of them are within 0.1 units of any enemy boids in the same Spatial_Grid cell.
+## or if they struck the enemy mothership. it uses Damageable so we can call that instead
+func _did_any_friendly_bolts_hit_enemies_or_mothership() -> bool:
+    var did_any_hit : bool = false
+    if Friendly_Bolts_Velocities_COMP.is_empty():
+        return false
+
+    var friendly_bolts_transform_buffer : PackedVector3Array = _get_friendly_bolts_transform_buffer()
+    if friendly_bolts_transform_buffer.is_empty():
+        return false
+
+    var enemy_ship_hit_distance : float = 0.1
+    var slot_index : int = 0
+    while slot_index < Friendly_Bolts_Velocities_COMP.size():
+        var bolt_velocity_data : Vector4 = Friendly_Bolts_Velocities_COMP[slot_index]
+        var bolt_age : float = bolt_velocity_data.w
+        var slot_is_active : bool = bolt_age >= 0.0 and bolt_age <= All_Bolts_Lifetimes
+        if slot_is_active:
+            var position_index : int = (slot_index * 4) + 3
+            if position_index < friendly_bolts_transform_buffer.size():
+                var bolt_position : Vector3 = friendly_bolts_transform_buffer[position_index]
+                var did_hit_enemy_boid : bool = false
+
+                var cell_id : int = Spatial_Grid.Get_ID_of_Cell_from_Location(bolt_position)
+                if cell_id != -1:
+                    var boids_in_same_cell : PackedInt32Array = Spatial_Grid.Get_All_Boids_in_Cell(cell_id, false)
+                    var boid_i : int = 0
+                    while boid_i < boids_in_same_cell.size():
+                        var boid_index : int = boids_in_same_cell[boid_i]
+                        if boid_index >= 0 and boid_index < MAX_NUMBER_OF_BOIDS and Get_Boid_State(boid_index) == E_Boid_State.ENEMY:
+                            var enemy_boid_position : Vector3 = _get_boid_transform(boid_index).origin
+                            var did_hit_enemy : bool = bolt_position.distance_to(enemy_boid_position) <= enemy_ship_hit_distance
+                            if did_hit_enemy:
+                                Apply_Damage_SYS(boid_index, 1)
+                                _set_friendly_bolt_slot_inactive(slot_index)
+                                did_any_hit = true
+                                did_hit_enemy_boid = true
+                                break
+                        boid_i += 1
+
+                if did_hit_enemy_boid == false:
+                    var enemy_mothership : Damageable = targets_index.get(-6, null)
+                    if enemy_mothership != null:
+                        var enemy_mothership_hit_radius : float = _estimate_damageable_hit_radius(enemy_mothership)
+                        var did_hit_mothership : bool = bolt_position.distance_to(enemy_mothership.global_position) <= enemy_mothership_hit_radius
+                        if did_hit_mothership:
+                            enemy_mothership.Apply_Damage(1.0)
+                            _set_friendly_bolt_slot_inactive(slot_index)
+                            did_any_hit = true
+        slot_index += 1
+
+    return did_any_hit
+
 
 
 ## TODO: Cycle through all enemy bolts and check their XYZ position and see if
@@ -685,7 +894,7 @@ func _did_any_enemy_bolts_hit_planet_or_mothership() -> bool:
     while slot_index < Enemy_Bolts_Velocities_COMP.size():
         var bolt_velocity_data : Vector4 = Enemy_Bolts_Velocities_COMP[slot_index]
         var bolt_age : float = bolt_velocity_data.w
-        var slot_is_active : bool = bolt_age > 0.0 and bolt_age <= All_Bolts_Lifetimes
+        var slot_is_active : bool = bolt_age >= 0.0 and bolt_age <= All_Bolts_Lifetimes
         if slot_is_active:
             var position_index : int = (slot_index * 4) + 3
             if position_index < enemy_bolts_transform_buffer.size():
@@ -702,6 +911,7 @@ func _did_any_enemy_bolts_hit_planet_or_mothership() -> bool:
                             
                             #TODO: All enemies 
                             target_damageable.Apply_Damage(1.0)
+                            _apply_enemy_bolt_explosion_damage(bolt_position)
                             _set_enemy_bolt_slot_inactive(slot_index)
                             did_any_hit = true
                             break
@@ -736,7 +946,7 @@ func _flush_multimesh_buffers(do_friendlys : bool, do_bolts : bool):
         new_buffer = _current_enemy_transforms_buffer if _use_current_buffer_this_frame else _previous_enemy_transforms_buffer
         prev_buffer = _current_enemy_transforms_buffer if not _use_current_buffer_this_frame else _previous_enemy_transforms_buffer
 
-
+    #ta#rget_multmesh.multimesh.set_buffer_interpolated(new_buffer, prev_buffer)
 
 
 
@@ -744,8 +954,54 @@ func _flush_multimesh_buffers(do_friendlys : bool, do_bolts : bool):
 
 
 func _physics_process(delta: float) -> void:
-     
+    
     # Time to do some caluclating!
+    # --- Friendly boids (not BOLTS) -------------------------------------------
+    # When spawned in for the first time, Friendly bodis will wander aimlessly,
+    # Always making sure to avoid colliding with other boids by checking its neighbours.
+    # Occasionally they'll slerp to a new direction to wander about.
+    # If a friendly boid goes out of bounds (outside the extent of Spatial Partitioning Grid), 
+    # the weight for steering BACK into bounds is MUCH higher.
+    # If a friendly boid is close enough to a planet, their weight to steer-avoid is MUCH higher.
+    # If a Friendly boid finds an enemy boid in their cone of vision when doing a Spatial_Grid.Get_Boids_in_Cone()
+    # They will then have a much higher Pursue weight and start to pursue the enemy.
+    # If the friendly boid is within Friendly_Firing_Distance of the enemy, they'll start to fire.
+    # If the friendly boid is out of ammo, their weight to seek/pursue/arrive the friendly mothership is MUCH Higher.
+    # Once a friendly boid "arrives" at a friendly mothership (within reload_distance unit) they'll drop their speed to try match the mothership.
+    # after reload_time_required seconds their ammo will be reset and repeat.
+    # if a friendly boid is ever destroyed by taking too much damage from the explosions caused by
+    # Enemy boid bolts when they strike a planet, the friendly boid will have its index in All_Entities_ENT set to 0 (dead)
+    # and then after Friendly_Respawn_Time seconds it will spawn from the friendly mothership with an intial velocity of UP or DOWN
+    # 
+    # FRIENDLY_BOID_MANAGER_THREAD should try calculate all of this, physics process will start the thread,
+    # and then wait for FRIENDLY_BOID_MANAGER_THREAD to finish it's work, then the multmesh buffers will be updated / interpolated 
+    # using multimesh.set_buffer_interpolated
+    #
+    # --- Friendly bolts (not BOIDS) -------------------------------------------
+    # When Fire_Bolt is called... the chosen bolt will have the location set to the ship that fired it and float off with it's new velocity.
+    # Every Bolt fired should have its W component (not XYZ, because its a Vector4) incremented by the physics frame delta
+    # 
+    # FRIENDLY_BOID_BOLT_MANAGER_THREAD will also be responsible for checking bolt collisions if 
+    # a friendly bolt collided with a enemy boids, and also for cleaning up after itself with Retire_old_Bolt()
+    #
+    # --- Enemy boids (not BOLTS) ----------------------------------------------
+    #
+    # When spawned in for the first time, Enemy boids will wander aimlessly, with a SLIGHT weight towards a planet.
+    # Always making sure to avoid colliding with other boids by checking its neighbours.
+    # Occasionally they'll slerp to a new direction to wander about.
+    # If a Enemy boid goes out of bounds, the weight for steering BACK into bounds is MUCH higher.
+    # The closer an enemy boid gets to a planet, the higher the weight the enemy boid will look_at the planet and steer towards it
+    # Once the Enemy boid is within Enemy_Firing_Distance units to the planet (excluding its radius) 
+    # it will attempt to fire its bomb (bolt) (all enemy boids are effectively bombers).
+    # Once an enemy boid is too close it will have a MUCH higher avoidance weight and try to steer away.
+    # Enemy boids reload the same way as Friendly boids, by seeking arrive to the enemy mothership and try to wait while 
+    # close enough to the ship to be reloaded.
+    # When an enemy boid has been enough times by a friendly boid and has its health set to 0, 
+    # it will wait a few seconds and respawn at the mothership with a initial BACKWARDS velocity
+    #
+    # ENEMY_BOID_MANAGER_THREAD should calculate this
+    # ENEMY_BOID_BOLT_MANAGER_THREAD will calculate all the Bolts like how FRIENDLY_BOID_BOLT_MANAGER_THREAD checks friendly bolts
+    
     _flush_multimesh_buffers(true, false)
     _flush_multimesh_buffers(true, true)
     _flush_multimesh_buffers(false, false)
