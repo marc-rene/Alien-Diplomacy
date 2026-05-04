@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://bau84352tox0a"]
+[gd_scene format=3 uid="uid://cogi0hxco40tg"]
 
 [ext_resource type="Script" uid="uid://bvcf4vhgvf6vi" path="res://MainScene/AlienDiplomacy.gd" id="1_r1oyn"]
 [ext_resource type="Script" uid="uid://cwmheclul04bv" path="res://Boids Test/Boid/Boid_Manager.gd" id="2_boidmgr"]
@@ -177,7 +177,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.2336822, 0, -0.94770336)
 
 [node name="Viewport2Din3D" parent="." unique_id=456937873 instance=ExtResource("6_f3ewb")]
 process_mode = 3
-transform = Transform3D(1.5, 0, 0, 0, -6.556708e-08, 1.5, 0, -1.5, -6.556708e-08, 5.9604645e-08, 1.2108622, 0.39218885)
+transform = Transform3D(1.5, 0, 0, 0, -6.556708e-08, 1.5, 0, -1.5, -6.556708e-08, 5.9604645e-08, 1.607599, 0.23010057)
 screen_size = Vector2(0.5, 0.5)
 scene = ExtResource("7_typing")
 viewport_size = Vector2(500, 500)

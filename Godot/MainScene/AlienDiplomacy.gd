@@ -69,29 +69,8 @@ func receive_outcome(outcome: String) -> void:
     if boids == null:
         print("receive_outcome: no Boid_Manager instance found")
         return
-
-    var step := 0.15
-
     match outcome:
         "peace":
-            print("Outcome PEACE — reducing invasion, reinforcing friendlies")
-            boids.Decrease_Enemy_Pool_Size(step)
-            # Grow visible friendly count by 15% of the total friendly cap
-            var new_vis := mini(
-                boids.Friendly_MultiMesh.multimesh.visible_instance_count + int(step * boids.max_friendly_count),
-                boids.max_friendly_count
-            )
-            boids.Friendly_MultiMesh.multimesh.visible_instance_count = new_vis
-            boids.keep_spawning_f = true  # refill any dead friendly slots
-            print("Enemy pool: ", boids.Enemy_Pool_Amount, "  Friendly visible: ", new_vis)
-
+            boids.Peace_Achieved()
         "war":
-            print("Outcome WAR — escalating invasion, thinning friendlies")
-            boids.Increase_Enemy_Pool_Size(step)
-            # Shrink visible friendly count by 15% of the total friendly cap
-            var new_vis := maxi(
-                boids.Friendly_MultiMesh.multimesh.visible_instance_count - int(step * boids.max_friendly_count),
-                0
-            )
-            boids.Friendly_MultiMesh.multimesh.visible_instance_count = new_vis
-            print("Enemy pool: ", boids.Enemy_Pool_Amount, "  Friendly visible: ", new_vis)
+            boids.Increase_Enemy_Pool_Size(0.15)

@@ -15,9 +15,9 @@ signal outcome_reached(outcome: String)  # "peace", "war", "stalemate"
 var ai_chat: Node = null
 var ai_busy: bool = false
 var _warming_up: bool = false
-var _outcome_declared: bool = false
 var _exchange_count: int = 0
 var _token_buffer: String = ""
+var _full_response: String = ""
 var _flush_timer: float = 0.0
 const FLUSH_INTERVAL: float = 0.05
 
@@ -365,6 +365,7 @@ func _on_response_updated(new_token: String) -> void:
     if _warming_up:
         return
     _token_buffer += new_token
+    _full_response += new_token
     _emotion_check_buffer += new_token
     if _emotion_check_buffer.length() > 80:
         _set_emotion(_detect_emotion(_emotion_check_buffer))
@@ -387,7 +388,8 @@ func _on_response_finished(_response: String) -> void:
         print("Warmup complete")
         return
     _exchange_count += 1
-    _check_outcome(_response)
+    _check_outcome(_full_response)
+    _full_response = ""
     chat_label.append_text("\n")
     ai_busy = false
     line_edit.editable = true
@@ -395,16 +397,12 @@ func _on_response_finished(_response: String) -> void:
 
 
 func _check_outcome(response: String) -> void:
-    if _outcome_declared:
-        return
     if "[OUTCOME:PEACE]" in response:
-        _outcome_declared = true
         _set_emotion("happy")
         outcome_reached.emit("peace")
         get_tree().call_group("outcome_listener", "receive_outcome", "peace")
         print("Outcome: PEACE")
     elif "[OUTCOME:WAR]" in response:
-        _outcome_declared = true
         _set_emotion("angry")
         outcome_reached.emit("war")
         get_tree().call_group("outcome_listener", "receive_outcome", "war")
