@@ -80,6 +80,10 @@ func Stop_Pulse_Targeted_Red() -> void:
     if target_mesh != null and target_mesh.material_overlay == _target_pulse_overlay_material:
         target_mesh.material_overlay = null
 
+    var label : Label3D = get_node_or_null("Label3D") as Label3D
+    if label != null:
+        label.modulate = Color.WHITE
+
     _target_pulse_is_active = false
 
 
@@ -104,11 +108,20 @@ func _start_pulse_loop_tween() -> void:
 
     _target_pulse_overlay_material.albedo_color = dim_color
 
+    var label : Label3D = get_node_or_null("Label3D") as Label3D
+    var label_bright : Color = Color(Target_Pulse_Color.r, Target_Pulse_Color.g, Target_Pulse_Color.b, 1.0)
+    if label != null:
+        label.modulate = Color.WHITE
+
     _target_pulse_tween = create_tween()
     _target_pulse_tween.set_loops()
     _target_pulse_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
     _target_pulse_tween.tween_property(_target_pulse_overlay_material, "albedo_color", bright_color, half_duration)
+    if label != null:
+        _target_pulse_tween.parallel().tween_property(label, "modulate", label_bright, half_duration)
     _target_pulse_tween.tween_property(_target_pulse_overlay_material, "albedo_color", dim_color, half_duration)
+    if label != null:
+        _target_pulse_tween.parallel().tween_property(label, "modulate", Color.WHITE, half_duration)
 
 
 func _build_pulse_overlay_material() -> StandardMaterial3D:

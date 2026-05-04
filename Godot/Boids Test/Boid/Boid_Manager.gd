@@ -230,6 +230,10 @@ func _set_currently_pulsing_target(new_target_node: Node) -> void:
     if _currently_pulsing_target != null:
         _currently_pulsing_target.Pulse_Targeted_Red()
 
+
+## every X frames lets change things up
+@export var Do_Change_Every_X_Frame : int = 2000
+
 func _process(delta: float) -> void:
     
     Enemy_MultiMesh.multimesh.visible_instance_count = int(clampf(Enemy_Pool_Amount, 0.0, 1.0) * (Max_Num_Boids - (Max_Num_Boids * Friendly_Enemy_Count_Ratio)))
@@ -317,21 +321,22 @@ func _process(delta: float) -> void:
     
     if frame_fence % 9001 == 0: 
         for i in range(Max_Num_Boids):
-            OFFSETS_comp.encode_s8(i, randi_range(-2, 2))
+            OFFSETS_comp.encode_s8(i, randi_range(-1, 1))
             if OFFSETS_comp[i] == 0:
                 OFFSETS_comp[i] += 1
     if frame_fence % 19001 == 0: 
         for i in range(Max_Num_Boids):
-            OFFSETS_comp.encode_s8(i, randi_range(-3, 3))
+            OFFSETS_comp.encode_s8(i, randi_range(-2, 2))
             if OFFSETS_comp[i] == 0:
                 OFFSETS_comp[i] += 1
     if frame_fence % 28979 == 0: 
         for i in range(Max_Num_Boids):
-            OFFSETS_comp.encode_s8(i, randi_range(-4, 4))
+            OFFSETS_comp.encode_s8(i, randi_range(-3, 3))
             if OFFSETS_comp[i] == 0:
                 OFFSETS_comp[i] += 1
     
-    if frame_fence % 1000 == 0: 
+    
+    if frame_fence % Do_Change_Every_X_Frame == 0: 
         
         print("FPS: " + str(Engine.get_frames_per_second()) )
         print("Homies: " + str(Friendly_MultiMesh.multimesh.instance_count) + "\tbuffer size: " + str(Friendly_MultiMesh.multimesh.buffer.size()))
@@ -418,9 +423,9 @@ func _physics_process(delta: float) -> void:
         #target_pos.z = randfn(target_pos.z, 1.0)        
         #var to_target = make_blurry(target_node.global_position, 1.0 / ((ent % 20) + 1)) - get_boid_transform(ent).origin
         to_target = target_pos - new_trans.origin
-        to_target.x += clampf((randf_range(0.001, 1.1) * OFFSETS_comp[ent]), 0.0, 1)
+        to_target.x += clampf((randf_range(-1.1, 1.1) * OFFSETS_comp[ent]), -1.0, 1)
         to_target.y += clampf((randf_range(-1.8, 1.8) * OFFSETS_comp[ent]), -1.0, 2)
-        to_target.z += clampf((randf_range(0.001, 1.1) * OFFSETS_comp[ent]), -1.0, 1)
+        to_target.z += clampf((randf_range(-1.1, 1.1) * OFFSETS_comp[ent]), -1.0, 1)
         desried = to_target.normalized() * max_speed # max speed
         
         force = desried - VELOCITIES_comp[ent]
