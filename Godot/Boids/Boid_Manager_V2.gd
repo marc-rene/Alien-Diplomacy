@@ -18,12 +18,12 @@ static func Get_Instance():
 @export_group("Global")
 
 ## whats the absoilute maximum number of boids we can have??
-@export_range(2, 260000, 1, "prefer_slider") var MAX_NUMBER_OF_BOIDS : int = 1000
+static var MAX_NUMBER_OF_BOIDS : int = 1000
 
 ## How do we want to divide up our friendlies? (Assuming we want 100 boids max)
 ##   0.5 == Equal num of Friends V Enemy (50 v 50)
 ##   0.1 == Small num of Friends V CRAP LOADS of Enemy (10 v 90)
-@export_range(0, 1, 0.01, "prefer_slider") var Friendly_Enemy_Count_Ratio : float = 0.5
+static var Friendly_Enemy_Count_Ratio : float = 0.5
 
 ## All bolts can only exit for a max of X seconds... we want to 
 @export_range(0, 5, 0.1, "prefer_slider") var All_Bolts_Lifetimes : float = 2.0
@@ -42,6 +42,9 @@ var Friendly_Spawn_Pool_Amount : float = 1.0
 ## what mesh we gonna use for enemies
 @export var Friendly_MultiMesh : MultiMeshInstance3D
 
+## any cool friendly meshes?
+@export var Friendly_Ship_Mesh : MeshInstance3D
+
 ## what mesh we gonna use for friendly ships bolts when firing
 @export var Friendly_Bolts_MultiMesh : MultiMeshInstance3D
 
@@ -54,6 +57,9 @@ var Friendly_Spawn_Pool_Amount : float = 1.0
 
 ## what multimesh we gonna use for enemies
 @export var Enemy_MultiMesh : MultiMeshInstance3D
+
+## What mesh we wanna use for enemies?
+@export var Enemy_Ship_Mesh : MeshInstance3D
 
 ## what multimesh we gonna use for enemies
 @export var Enemy_Bolts_MultiMesh : MultiMeshInstance3D
@@ -112,15 +118,18 @@ var Ammo_COMP : PackedByteArray
 ## For friendlies, Lets get the index of the boid in question
 ## For enemies, which planet are we targetting?
 var Friendly_Target_Enemy_Boid : PackedInt32Array
+var Enemy_Target_Planet_ID_COMP : PackedInt32Array
+var Target_Recheck_Timer_COMP : PackedFloat32Array
+var Reload_Timer_COMP : PackedFloat32Array
 
 ## For enemies, which planet they're targetting
 @onready var targets_index : Dictionary[int, Damageable] = {
-    -1 : $OffbrandSolarSystem/PlanetEarthy,
-    -2 : $OffbrandSolarSystem/PlanetMoony,
-    -3 : $OffbrandSolarSystem/PlanetKnockOffJupiter,
-    -4 : $"OffbrandSolarSystem/THE GODDAMN SUN",
-    -5 : $"Friendly MotherShip",
-    -6 : $"Enemy MotherShip"
+    -1 : %PlanetEarthy,
+    -2 : %PlanetMoony,
+    -3 : %PlanetKnockOffJupiter,
+    -4 : %"THE GODDAMN SUN",
+    -5 : %"Friendly MotherShip",
+    -6 : %"Enemy MotherShip"
 }
 
 
@@ -173,12 +182,51 @@ var FRIENDLY_BOID_BOLT_MANAGER_THREAD : Thread
 var ENEMY_BOID_BOLT_MANAGER_THREAD : Thread
 # ------------------------------------------------------------------------------
 
+var _friendly_boid_wake_semaphore : Semaphore = Semaphore.new()
+var _enemy_boid_wake_semaphore : Semaphore = Semaphore.new()
+var _friendly_bolt_wake_semaphore : Semaphore = Semaphore.new()
+var _enemy_bolt_wake_semaphore : Semaphore = Semaphore.new()
+
+var _friendly_boid_done_semaphore : Semaphore = Semaphore.new()
+var _enemy_boid_done_semaphore : Semaphore = Semaphore.new()
+var _friendly_bolt_done_semaphore : Semaphore = Semaphore.new()
+var _enemy_bolt_done_semaphore : Semaphore = Semaphore.new()
+
+var _worker_exit_requested : bool = false
+
+var _friendly_boid_worker_delta : float = 0.0
+var _enemy_boid_worker_delta : float = 0.0
+var _friendly_bolt_worker_delta : float = 0.0
+var _enemy_bolt_worker_delta : float = 0.0
+
+var _physics_status_text : String = ""
+
+var _target_position_cache : Dictionary[int, Vector3] = {}
+var _target_radius_cache : Dictionary[int, float] = {}
+var _bounds_center_cache : Vector3 = Vector3.ZERO
+var _bounds_extents_cache : Vector3 = Vector3(32.0, 16.0, 32.0)
+var _has_bounds_cache : bool = false
+var _simulation_time_seconds : float = 0.0
+var _friendly_no_enemy_elapsed_seconds : float = 0.0
 
 
 
-func _friendly_slots_count() -> int:
+
+static func _friendly_slots_count() -> int:
     var slots_count : int = int(MAX_NUMBER_OF_BOIDS * Friendly_Enemy_Count_Ratio)
     return clampi(slots_count, 0, MAX_NUMBER_OF_BOIDS * Friendly_Enemy_Count_Ratio)
+
+
+func _is_friendly_slot_index(boid_index: int) -> bool:
+    if _is_valid_boid_index(boid_index) == false:
+        return false
+    return boid_index < _friendly_slots_count()
+
+
+static func _is_enemy_slot_index(boid_index: int) -> bool:
+    if _is_valid_boid_index(boid_index) == false:
+        return false
+    return boid_index >= _friendly_slots_count()
 
 
 ## increase the friendly pool size from X percent to Y percent... 
@@ -236,7 +284,7 @@ func _enemy_pool_cap() -> int:
     return clampi(raw_cap, 1, _enemy_slots_count())
 
 
-func _is_valid_boid_index(boid_index: int) -> bool:
+static func _is_valid_boid_index(boid_index: int) -> bool:
     return boid_index >= 0 and boid_index < MAX_NUMBER_OF_BOIDS
 
 
@@ -297,29 +345,40 @@ func _set_boid_transform(boid_index: int, new_transform: Transform3D) -> bool:
         printerr("HEY! SILLY! " + str(boid_index) + " isn't a valid boid index")
         return false
     
-    var target_buffer : PackedVector3Array
-    var actual_index : int
-    
+    var actual_index : int = boid_index if is_friendly_boid(boid_index) else Normalise_Enemy_Boid_index(boid_index)
+    var base_index : int = actual_index * 4
+
     if is_friendly_boid(boid_index):
-        actual_index = boid_index
         if _use_current_buffer_this_frame:
-            target_buffer = _current_friendly_transforms_buffer
-                
+            if (base_index + 3) >= _current_friendly_transforms_buffer.size():
+                return false
+            _current_friendly_transforms_buffer[base_index + 0] = new_transform.basis.x
+            _current_friendly_transforms_buffer[base_index + 1] = new_transform.basis.y
+            _current_friendly_transforms_buffer[base_index + 2] = new_transform.basis.z
+            _current_friendly_transforms_buffer[base_index + 3] = new_transform.origin
         else:
-            target_buffer = _previous_friendly_transforms_buffer
-                
+            if (base_index + 3) >= _previous_friendly_transforms_buffer.size():
+                return false
+            _previous_friendly_transforms_buffer[base_index + 0] = new_transform.basis.x
+            _previous_friendly_transforms_buffer[base_index + 1] = new_transform.basis.y
+            _previous_friendly_transforms_buffer[base_index + 2] = new_transform.basis.z
+            _previous_friendly_transforms_buffer[base_index + 3] = new_transform.origin
     else:
-        actual_index = Normalise_Enemy_Boid_index(boid_index)
         if _use_current_buffer_this_frame:
-            target_buffer = _current_enemy_transforms_buffer
-        
+            if (base_index + 3) >= _current_enemy_transforms_buffer.size():
+                return false
+            _current_enemy_transforms_buffer[base_index + 0] = new_transform.basis.x
+            _current_enemy_transforms_buffer[base_index + 1] = new_transform.basis.y
+            _current_enemy_transforms_buffer[base_index + 2] = new_transform.basis.z
+            _current_enemy_transforms_buffer[base_index + 3] = new_transform.origin
         else:
-            target_buffer = _previous_enemy_transforms_buffer
-            
-    target_buffer.set( ((actual_index * 4) + 0), new_transform.basis.x)
-    target_buffer.set( ((actual_index * 4) + 0), new_transform.basis.y)
-    target_buffer.set( ((actual_index * 4) + 0), new_transform.basis.z)
-    target_buffer.set( ((actual_index * 4) + 0), new_transform.origin)
+            if (base_index + 3) >= _previous_enemy_transforms_buffer.size():
+                return false
+            _previous_enemy_transforms_buffer[base_index + 0] = new_transform.basis.x
+            _previous_enemy_transforms_buffer[base_index + 1] = new_transform.basis.y
+            _previous_enemy_transforms_buffer[base_index + 2] = new_transform.basis.z
+            _previous_enemy_transforms_buffer[base_index + 3] = new_transform.origin
+
     return true
             
             
@@ -385,6 +444,445 @@ func _get_bolt_origin(slot_index: int, for_friendly: bool, from_current_buffer: 
     if origin_index >= source_buffer.size():
         return Vector3.ZERO
     return source_buffer[origin_index]
+
+
+func _get_active_bolt_transforms_buffer(for_friendly_bolts: bool) -> PackedVector3Array:
+    if for_friendly_bolts:
+        return _current_friendly_bolts_transforms_buffer if _use_current_buffer_this_frame else _previous_friendly_bolts_transforms_buffer
+    return _current_enemy_bolts_transforms_buffer if _use_current_buffer_this_frame else _previous_enemy_bolts_transforms_buffer
+
+
+func _set_active_bolt_transforms_buffer(for_friendly_bolts: bool, new_buffer: PackedVector3Array) -> void:
+    if for_friendly_bolts:
+        if _use_current_buffer_this_frame:
+            _current_friendly_bolts_transforms_buffer = new_buffer
+        else:
+            _previous_friendly_bolts_transforms_buffer = new_buffer
+    else:
+        if _use_current_buffer_this_frame:
+            _current_enemy_bolts_transforms_buffer = new_buffer
+        else:
+            _previous_enemy_bolts_transforms_buffer = new_buffer
+
+
+func _safe_normalised(input_vector: Vector3) -> Vector3:
+    if input_vector.length_squared() <= 0.000001:
+        return Vector3.ZERO
+    return input_vector.normalized()
+
+
+func _limit_magnitude(input_vector: Vector3, max_magnitude: float) -> Vector3:
+    var safe_limit : float = max(max_magnitude, 0.000001)
+    var current_length : float = input_vector.length()
+    if current_length <= safe_limit:
+        return input_vector
+    return input_vector * (safe_limit / max(current_length, 0.000001))
+
+
+func _steer_towards(current_velocity: Vector3, desired_velocity: Vector3) -> Vector3:
+    var steering_force : Vector3 = desired_velocity - current_velocity
+    return _limit_magnitude(steering_force, max_force)
+
+
+func _calc_bounds_steer(boid_position: Vector3) -> Vector3:
+    if _has_bounds_cache == false:
+        return Vector3.ZERO
+
+    var local_position : Vector3 = boid_position - _bounds_center_cache
+    var safe_extents : Vector3 = Vector3(
+        max(_bounds_extents_cache.x, 0.001),
+        max(_bounds_extents_cache.y, 0.001),
+        max(_bounds_extents_cache.z, 0.001)
+    )
+
+    var desired_direction : Vector3 = Vector3.ZERO
+    var x_limit : float = safe_extents.x * 0.9
+    var y_limit : float = safe_extents.y * 0.9
+    var z_limit : float = safe_extents.z * 0.9
+
+    if local_position.x > x_limit:
+        desired_direction.x = -1.0
+    elif local_position.x < -x_limit:
+        desired_direction.x = 1.0
+
+    if local_position.y > y_limit:
+        desired_direction.y = -1.0
+    elif local_position.y < -y_limit:
+        desired_direction.y = 1.0
+
+    if local_position.z > z_limit:
+        desired_direction.z = -1.0
+    elif local_position.z < -z_limit:
+        desired_direction.z = 1.0
+
+    return _safe_normalised(desired_direction)
+
+
+func _calc_planet_avoidance_steer(boid_position: Vector3) -> Vector3:
+    var avoidance_direction : Vector3 = Vector3.ZERO
+    var planet_ids : PackedInt32Array = PackedInt32Array([-1, -2, -3, -4])
+    var planet_i : int = 0
+    while planet_i < planet_ids.size():
+        var planet_id : int = planet_ids[planet_i]
+        if _target_position_cache.has(planet_id) and _target_radius_cache.has(planet_id):
+            var planet_position : Vector3 = _target_position_cache.get(planet_id, Vector3.ZERO)
+            var planet_radius : float = float(_target_radius_cache.get(planet_id, 0.5))
+            var to_boid : Vector3 = boid_position - planet_position
+            var distance_to_planet : float = max(to_boid.length(), 0.000001)
+            var avoidance_distance : float = max(planet_radius * 2.0, 0.5)
+            if distance_to_planet < avoidance_distance:
+                var push_strength : float = 1.0 - (distance_to_planet / avoidance_distance)
+                avoidance_direction += _safe_normalised(to_boid) * push_strength
+        planet_i += 1
+    return _safe_normalised(avoidance_direction)
+
+
+func _calc_separation_steer(boid_index: int, boid_position: Vector3, only_avoid_same_faction: bool) -> Vector3:
+    var separation_direction : Vector3 = Vector3.ZERO
+    var neighbour_scan_radius_sq : float = 9.0
+    var candidate_boid_index : int = 0
+    while candidate_boid_index < MAX_NUMBER_OF_BOIDS:
+        if candidate_boid_index != boid_index and _is_valid_boid_index(candidate_boid_index):
+            var candidate_health : int = int(All_Entities_ENT[candidate_boid_index])
+            if candidate_health != 0:
+                var same_faction : bool = (_is_friendly_slot_index(candidate_boid_index) and _is_friendly_slot_index(boid_index)) or (_is_enemy_slot_index(candidate_boid_index) and _is_enemy_slot_index(boid_index))
+                if only_avoid_same_faction == false or same_faction:
+                    var other_position : Vector3 = _get_boid_transform(candidate_boid_index, true).origin
+                    var away : Vector3 = boid_position - other_position
+                    var distance_sq : float = away.length_squared()
+                    if distance_sq > 0.0001 and distance_sq < neighbour_scan_radius_sq:
+                        separation_direction += away / distance_sq
+        candidate_boid_index += 1
+
+    return _safe_normalised(separation_direction)
+
+
+func _compute_wander_steer(boid_index: int, forward_direction: Vector3) -> Vector3:
+    var safe_forward : Vector3 = _safe_normalised(forward_direction)
+    if safe_forward.length_squared() <= 0.000001:
+        safe_forward = Vector3.FORWARD
+
+    var right_direction : Vector3 = _safe_normalised(safe_forward.cross(Vector3.UP))
+    if right_direction.length_squared() <= 0.000001:
+        right_direction = Vector3.RIGHT
+    var up_direction : Vector3 = _safe_normalised(right_direction.cross(safe_forward))
+    if up_direction.length_squared() <= 0.000001:
+        up_direction = Vector3.UP
+
+    var angle_a : float = (_simulation_time_seconds * 1.1) + (float(boid_index) * 0.619)
+    var angle_b : float = (_simulation_time_seconds * 1.7) + (float(boid_index) * 0.337)
+    var wave_a : float = sin(angle_a)
+    var wave_b : float = cos(angle_b)
+
+    var wander_direction : Vector3 = safe_forward + (right_direction * wave_a * 0.7) + (up_direction * wave_b * 0.4)
+    return _safe_normalised(wander_direction)
+
+
+func _compose_boid_transform(boid_position: Vector3, boid_velocity: Vector3) -> Transform3D:
+    var safe_velocity : Vector3 = boid_velocity
+    if safe_velocity.length_squared() <= 0.000001:
+        safe_velocity = Vector3.FORWARD
+    var visual_forward : Vector3 = _safe_normalised(safe_velocity)
+    var target_position : Vector3 = boid_position + visual_forward
+    var look_transform : Transform3D = Transform3D(Basis.IDENTITY, boid_position).looking_at(target_position, Vector3.UP, true)
+    return look_transform
+
+
+func _find_nearest_enemy_boid_for_friendly(_friendly_boid_index: int, boid_position: Vector3, boid_forward: Vector3) -> int:
+    var best_enemy_index : int = -1
+    var best_distance_sq : float = INF
+    var first_enemy_index : int = _friendly_slots_count()
+    var enemy_index_scan : int = first_enemy_index
+    var normalised_forward : Vector3 = _safe_normalised(boid_forward)
+    var cone_dot_threshold : float = cos(deg_to_rad(28.0))
+    if normalised_forward.length_squared() <= 0.000001:
+        normalised_forward = Vector3.FORWARD
+
+    while enemy_index_scan < MAX_NUMBER_OF_BOIDS:
+        if _is_enemy_slot_index(enemy_index_scan) and All_Entities_ENT[enemy_index_scan] != 0:
+            var enemy_scan_position : Vector3 = _get_boid_transform(enemy_index_scan, true).origin
+            var to_enemy : Vector3 = enemy_scan_position - boid_position
+            var enemy_scan_distance_sq : float = to_enemy.length_squared()
+            if enemy_scan_distance_sq > 0.000001:
+                var enemy_direction : Vector3 = to_enemy.normalized()
+                var directional_dot : float = normalised_forward.dot(enemy_direction)
+                if directional_dot >= cone_dot_threshold and enemy_scan_distance_sq < best_distance_sq:
+                    best_distance_sq = enemy_scan_distance_sq
+                    best_enemy_index = enemy_index_scan
+        enemy_index_scan += 1
+
+    if best_enemy_index != -1:
+        return best_enemy_index
+
+    enemy_index_scan = first_enemy_index
+    while enemy_index_scan < MAX_NUMBER_OF_BOIDS:
+        if _is_enemy_slot_index(enemy_index_scan) and All_Entities_ENT[enemy_index_scan] != 0:
+            var enemy_position_any_direction : Vector3 = _get_boid_transform(enemy_index_scan, true).origin
+            var any_direction_distance_sq : float = boid_position.distance_squared_to(enemy_position_any_direction)
+            if any_direction_distance_sq < best_distance_sq:
+                best_distance_sq = any_direction_distance_sq
+                best_enemy_index = enemy_index_scan
+        enemy_index_scan += 1
+
+    return best_enemy_index
+
+
+func _pick_nearest_planet_target(boid_position: Vector3) -> int:
+    var planet_ids : PackedInt32Array = PackedInt32Array([-1, -2, -3, -4])
+    var best_planet_id : int = -1
+    var best_planet_distance_sq : float = INF
+    var i : int = 0
+    while i < planet_ids.size():
+        var planet_id : int = planet_ids[i]
+        if _target_position_cache.has(planet_id):
+            var planet_position : Vector3 = _target_position_cache.get(planet_id, Vector3.ZERO)
+            var distance_sq : float = boid_position.distance_squared_to(planet_position)
+            if distance_sq < best_planet_distance_sq:
+                best_planet_distance_sq = distance_sq
+                best_planet_id = planet_id
+        i += 1
+    return best_planet_id
+
+
+func _is_enemy_count_alive() -> bool:
+    var enemy_start : int = _friendly_slots_count()
+    var enemy_index : int = enemy_start
+    while enemy_index < MAX_NUMBER_OF_BOIDS:
+        if _is_enemy_slot_index(enemy_index) and All_Entities_ENT[enemy_index] != 0:
+            return true
+        enemy_index += 1
+    return false
+
+
+func _run_friendly_boid_worker(delta: float) -> void:
+    _physics_status_text = "friendly boid worker running"
+    var has_any_enemy_alive : bool = _is_enemy_count_alive()
+    if has_any_enemy_alive:
+        _friendly_no_enemy_elapsed_seconds = 0.0
+    else:
+        _friendly_no_enemy_elapsed_seconds += delta
+
+    var friendly_slots : int = _friendly_slots_count()
+    var boid_index : int = 0
+    while boid_index < friendly_slots:
+        if _is_friendly_slot_index(boid_index) == false or All_Entities_ENT[boid_index] == 0:
+            boid_index += 1
+            continue
+
+        var boid_transform : Transform3D = _get_boid_transform(boid_index)
+        var boid_position : Vector3 = boid_transform.origin
+        var boid_velocity : Vector3 = Velocities_COMP[boid_index]
+        var boid_forward : Vector3 = _safe_normalised(boid_velocity)
+        if boid_forward.length_squared() <= 0.000001:
+            boid_forward = -boid_transform.basis.z
+            boid_forward = _safe_normalised(boid_forward)
+
+        var ammo_left : int = int(Ammo_COMP[boid_index])
+        var has_ammo : bool = ammo_left > 0
+        var steering_accumulator : Vector3 = Vector3.ZERO
+
+        var separation_steer : Vector3 = _calc_separation_steer(boid_index, boid_position, true)
+        steering_accumulator += separation_steer * 3.0
+
+        var bounds_steer : Vector3 = _calc_bounds_steer(boid_position)
+        steering_accumulator += bounds_steer * 5.5
+
+        var planet_avoid_steer : Vector3 = _calc_planet_avoidance_steer(boid_position)
+        steering_accumulator += planet_avoid_steer * 4.0
+
+        if has_ammo:
+            var recheck_timer : float = Target_Recheck_Timer_COMP[boid_index] - delta
+            Target_Recheck_Timer_COMP[boid_index] = recheck_timer
+
+            var target_enemy_index : int = int(Friendly_Target_Enemy_Boid[boid_index])
+            var target_valid : bool = _is_valid_boid_index(target_enemy_index) and _is_enemy_slot_index(target_enemy_index) and All_Entities_ENT[target_enemy_index] != 0
+            if target_valid == false or recheck_timer <= 0.0:
+                target_enemy_index = _find_nearest_enemy_boid_for_friendly(boid_index, boid_position, boid_forward)
+                Friendly_Target_Enemy_Boid[boid_index] = target_enemy_index
+                Target_Recheck_Timer_COMP[boid_index] = max(target_recheck_seconds, 0.2)
+
+            if _is_valid_boid_index(target_enemy_index) and _is_enemy_slot_index(target_enemy_index) and All_Entities_ENT[target_enemy_index] != 0:
+                var target_enemy_position : Vector3 = _get_boid_transform(target_enemy_index, true).origin
+                var to_enemy : Vector3 = target_enemy_position - boid_position
+                var distance_to_enemy : float = max(to_enemy.length(), 0.000001)
+                var desired_velocity_to_enemy : Vector3 = _safe_normalised(to_enemy) * max_speed
+                steering_accumulator += _steer_towards(boid_velocity, desired_velocity_to_enemy) * 2.75
+
+                if distance_to_enemy <= Friendly_Firing_Distance:
+                    Fire_Bolt(boid_index)
+            elif _friendly_no_enemy_elapsed_seconds >= 30.0 and _target_position_cache.has(-6):
+                var enemy_mothership_position : Vector3 = _target_position_cache.get(-6, boid_position)
+                var to_enemy_mothership : Vector3 = enemy_mothership_position - boid_position
+                var desired_enemy_mothership_velocity : Vector3 = _safe_normalised(to_enemy_mothership) * max_speed
+                steering_accumulator += _steer_towards(boid_velocity, desired_enemy_mothership_velocity) * 1.65
+            else:
+                var wander_steer_no_target : Vector3 = _compute_wander_steer(boid_index, boid_forward)
+                steering_accumulator += wander_steer_no_target * 1.2
+
+            Reload_Timer_COMP[boid_index] = 0.0
+        else:
+            Friendly_Target_Enemy_Boid[boid_index] = -1
+            var friendly_mothership_position : Vector3 = _target_position_cache.get(-5, boid_position)
+            var to_friendly_mothership : Vector3 = friendly_mothership_position - boid_position
+            var distance_to_friendly_mothership : float = max(to_friendly_mothership.length(), 0.000001)
+
+            var desired_speed_to_reload : float = max_speed
+            if distance_to_friendly_mothership < arrive_slowing_distance:
+                desired_speed_to_reload = max_speed * (distance_to_friendly_mothership / max(arrive_slowing_distance, 0.001))
+            var desired_reload_velocity : Vector3 = _safe_normalised(to_friendly_mothership) * max(desired_speed_to_reload, 0.0)
+            steering_accumulator += _steer_towards(boid_velocity, desired_reload_velocity) * 3.4
+
+            if distance_to_friendly_mothership <= reload_distance:
+                var reload_timer_value : float = Reload_Timer_COMP[boid_index] + delta
+                Reload_Timer_COMP[boid_index] = reload_timer_value
+                boid_velocity = boid_velocity.lerp(Vector3.ZERO, clampf(delta * 2.5, 0.0, 1.0))
+                if reload_timer_value >= reload_time_required:
+                    Ammo_COMP[boid_index] = clampi(Friendly_Ammo_Capacity, 0, 127)
+                    Reload_Timer_COMP[boid_index] = 0.0
+            else:
+                Reload_Timer_COMP[boid_index] = 0.0
+
+        var wander_steer : Vector3 = _compute_wander_steer(boid_index, boid_forward)
+        steering_accumulator += wander_steer * 0.7
+
+        var acceleration : Vector3 = _limit_magnitude(steering_accumulator, max_force) / max(mass, 0.001)
+        boid_velocity += acceleration * delta
+        boid_velocity = _limit_magnitude(boid_velocity, max_speed)
+        if boid_velocity.length_squared() <= 0.000001:
+            boid_velocity = boid_forward * min(max_speed, 0.3)
+
+        Velocities_COMP[boid_index] = boid_velocity
+        boid_position += boid_velocity * delta
+        var new_transform : Transform3D = _compose_boid_transform(boid_position, boid_velocity)
+        _set_boid_transform(boid_index, new_transform)
+        boid_index += 1
+
+
+func _run_enemy_boid_worker(delta: float) -> void:
+    _physics_status_text = "enemy boid worker running"
+    var first_enemy_index : int = _friendly_slots_count()
+    var boid_index : int = first_enemy_index
+    while boid_index < MAX_NUMBER_OF_BOIDS:
+        if _is_enemy_slot_index(boid_index) == false or All_Entities_ENT[boid_index] == 0:
+            boid_index += 1
+            continue
+
+        var boid_transform : Transform3D = _get_boid_transform(boid_index)
+        var boid_position : Vector3 = boid_transform.origin
+        var boid_velocity : Vector3 = Velocities_COMP[boid_index]
+        var boid_forward : Vector3 = _safe_normalised(boid_velocity)
+        if boid_forward.length_squared() <= 0.000001:
+            boid_forward = -boid_transform.basis.z
+            boid_forward = _safe_normalised(boid_forward)
+
+        var steering_accumulator : Vector3 = Vector3.ZERO
+        var separation_steer : Vector3 = _calc_separation_steer(boid_index, boid_position, true)
+        var bounds_steer : Vector3 = _calc_bounds_steer(boid_position)
+        var planet_avoid_steer : Vector3 = _calc_planet_avoidance_steer(boid_position)
+        steering_accumulator += separation_steer * 2.5
+        steering_accumulator += bounds_steer * 5.0
+
+        var ammo_left : int = int(Ammo_COMP[boid_index])
+        if ammo_left > 0:
+            var recheck_timer : float = Target_Recheck_Timer_COMP[boid_index] - delta
+            Target_Recheck_Timer_COMP[boid_index] = recheck_timer
+
+            var planet_target_id : int = int(Enemy_Target_Planet_ID_COMP[boid_index])
+            var target_valid : bool = _target_position_cache.has(planet_target_id)
+            if target_valid == false or recheck_timer <= 0.0:
+                planet_target_id = _pick_nearest_planet_target(boid_position)
+                Enemy_Target_Planet_ID_COMP[boid_index] = planet_target_id
+                Target_Recheck_Timer_COMP[boid_index] = max(target_recheck_seconds, 0.2)
+
+            if _target_position_cache.has(planet_target_id):
+                var planet_position : Vector3 = _target_position_cache.get(planet_target_id, boid_position)
+                var planet_radius : float = float(_target_radius_cache.get(planet_target_id, 0.5))
+                var to_planet : Vector3 = planet_position - boid_position
+                var distance_to_planet_centre : float = max(to_planet.length(), 0.000001)
+                var distance_to_planet_surface : float = max(distance_to_planet_centre - planet_radius, 0.0)
+
+                var desired_planet_speed : float = max_speed * 0.75
+                if distance_to_planet_surface < arrive_slowing_distance:
+                    desired_planet_speed = max_speed * (distance_to_planet_surface / max(arrive_slowing_distance, 0.001))
+                var desired_planet_velocity : Vector3 = _safe_normalised(to_planet) * max(desired_planet_speed, 0.0)
+
+                steering_accumulator += _steer_towards(boid_velocity, desired_planet_velocity) * 2.2
+                steering_accumulator += planet_avoid_steer * 1.35
+
+                if distance_to_planet_surface <= Enemy_Firing_Distance:
+                    Fire_Bolt(boid_index)
+
+                if distance_to_planet_surface < max(planet_radius * 0.35, 0.6):
+                    steering_accumulator += (-_safe_normalised(to_planet)) * 4.25
+            else:
+                var wander_without_planet : Vector3 = _compute_wander_steer(boid_index, boid_forward)
+                steering_accumulator += wander_without_planet * 1.2
+
+            Reload_Timer_COMP[boid_index] = 0.0
+        else:
+            Enemy_Target_Planet_ID_COMP[boid_index] = -1
+            var enemy_mothership_position : Vector3 = _target_position_cache.get(-6, boid_position)
+            var to_enemy_mothership : Vector3 = enemy_mothership_position - boid_position
+            var distance_to_enemy_mothership : float = max(to_enemy_mothership.length(), 0.000001)
+
+            var desired_enemy_reload_speed : float = max_speed
+            if distance_to_enemy_mothership < arrive_slowing_distance:
+                desired_enemy_reload_speed = max_speed * (distance_to_enemy_mothership / max(arrive_slowing_distance, 0.001))
+            var desired_enemy_reload_velocity : Vector3 = _safe_normalised(to_enemy_mothership) * max(desired_enemy_reload_speed, 0.0)
+            steering_accumulator += _steer_towards(boid_velocity, desired_enemy_reload_velocity) * 3.0
+
+            if distance_to_enemy_mothership <= reload_distance:
+                var enemy_reload_timer_value : float = Reload_Timer_COMP[boid_index] + delta
+                Reload_Timer_COMP[boid_index] = enemy_reload_timer_value
+                boid_velocity = boid_velocity.lerp(Vector3.ZERO, clampf(delta * 2.5, 0.0, 1.0))
+                if enemy_reload_timer_value >= reload_time_required:
+                    Ammo_COMP[boid_index] = clampi(Enemy_Ammo_Capacity, 0, 127)
+                    Reload_Timer_COMP[boid_index] = 0.0
+            else:
+                Reload_Timer_COMP[boid_index] = 0.0
+
+        var wander_steer : Vector3 = _compute_wander_steer(boid_index, boid_forward)
+        steering_accumulator += wander_steer * 0.8
+
+        var acceleration : Vector3 = _limit_magnitude(steering_accumulator, max_force) / max(mass, 0.001)
+        boid_velocity += acceleration * delta
+        boid_velocity = _limit_magnitude(boid_velocity, max_speed)
+        if boid_velocity.length_squared() <= 0.000001:
+            boid_velocity = boid_forward * min(max_speed, 0.3)
+
+        Velocities_COMP[boid_index] = boid_velocity
+        boid_position += boid_velocity * delta
+        var new_transform : Transform3D = _compose_boid_transform(boid_position, boid_velocity)
+        _set_boid_transform(boid_index, new_transform)
+
+        boid_index += 1
+
+
+func _run_bolt_worker(delta: float, for_friendly_bolts: bool) -> void:
+    var bolts_velocity_comp : PackedVector4Array = Friendly_Bolts_Velocities_COMP if for_friendly_bolts else Enemy_Bolts_Velocities_COMP
+    if bolts_velocity_comp.is_empty():
+        return
+
+    var active_bolt_transforms : PackedVector3Array = _get_active_bolt_transforms_buffer(for_friendly_bolts)
+    var slot_index : int = 0
+    while slot_index < bolts_velocity_comp.size():
+        var bolt_data : Vector4 = bolts_velocity_comp[slot_index]
+        if bolt_data.w >= 0.0:
+            bolt_data.w += delta
+            var origin_index : int = (slot_index * 4) + 3
+            if origin_index < active_bolt_transforms.size():
+                var bolt_origin : Vector3 = active_bolt_transforms[origin_index]
+                bolt_origin += Vector3(bolt_data.x, bolt_data.y, bolt_data.z) * delta
+                active_bolt_transforms[origin_index] = bolt_origin
+            bolts_velocity_comp[slot_index] = bolt_data
+        slot_index += 1
+
+    if for_friendly_bolts:
+        Friendly_Bolts_Velocities_COMP = bolts_velocity_comp
+    else:
+        Enemy_Bolts_Velocities_COMP = bolts_velocity_comp
+    _set_active_bolt_transforms_buffer(for_friendly_bolts, active_bolt_transforms)
+    Retire_old_Bolt(for_friendly_bolts)
  
 
 ## TODO: Get the current transform of the boid who fired, get its velocity, 
@@ -536,8 +1034,12 @@ func _respawn_boid_after_timer(boid_index: int, should_be_friendly: bool) -> voi
     All_Entities_ENT.set(boid_index, signed_health)
 
     var ammo_amount : int = Friendly_Ammo_Capacity if should_be_friendly else Enemy_Ammo_Capacity
-    ammo_amount = clampi(ammo_amount, -128, 127)
+    ammo_amount = clampi(ammo_amount, 0, 127)
     Ammo_COMP.set(boid_index, ammo_amount)
+    Friendly_Target_Enemy_Boid[boid_index] = -1
+    Enemy_Target_Planet_ID_COMP[boid_index] = -1
+    Target_Recheck_Timer_COMP[boid_index] = 0.0
+    Reload_Timer_COMP[boid_index] = 0.0
 
     var seeded_velocity : Vector3 = Vector3(
         randf_range(-0.1, 0.1),
@@ -630,16 +1132,139 @@ func Apply_Damage_SYS(Which_Boid_ENT : int, Damage : int):
  
 
 
+func _friendly_boid_thread_loop() -> void:
+    while true:
+        _friendly_boid_wake_semaphore.wait()
+        if _worker_exit_requested:
+            _friendly_boid_done_semaphore.post()
+            return
+        _run_friendly_boid_worker(_friendly_boid_worker_delta)
+        _friendly_boid_done_semaphore.post()
+
+
+func _enemy_boid_thread_loop() -> void:
+    while true:
+        _enemy_boid_wake_semaphore.wait()
+        if _worker_exit_requested:
+            _enemy_boid_done_semaphore.post()
+            return
+        _run_enemy_boid_worker(_enemy_boid_worker_delta)
+        _enemy_boid_done_semaphore.post()
+
+
+func _friendly_bolt_thread_loop() -> void:
+    while true:
+        _friendly_bolt_wake_semaphore.wait()
+        if _worker_exit_requested:
+            _friendly_bolt_done_semaphore.post()
+            return
+        _run_bolt_worker(_friendly_bolt_worker_delta, true)
+        _friendly_bolt_done_semaphore.post()
+
+
+func _enemy_bolt_thread_loop() -> void:
+    while true:
+        _enemy_bolt_wake_semaphore.wait()
+        if _worker_exit_requested:
+            _enemy_bolt_done_semaphore.post()
+            return
+        _run_bolt_worker(_enemy_bolt_worker_delta, false)
+        _enemy_bolt_done_semaphore.post()
+
+
+func _start_worker_threads() -> void:
+    _worker_exit_requested = false
+    FRIENDLY_BOID_MANAGER_THREAD = Thread.new()
+    ENEMY_BOID_MANAGER_THREAD = Thread.new()
+    FRIENDLY_BOID_BOLT_MANAGER_THREAD = Thread.new()
+    ENEMY_BOID_BOLT_MANAGER_THREAD = Thread.new()
+    FRIENDLY_BOID_MANAGER_THREAD.start(_friendly_boid_thread_loop)
+    ENEMY_BOID_MANAGER_THREAD.start(_enemy_boid_thread_loop)
+    FRIENDLY_BOID_BOLT_MANAGER_THREAD.start(_friendly_bolt_thread_loop)
+    ENEMY_BOID_BOLT_MANAGER_THREAD.start(_enemy_bolt_thread_loop)
+
+
+func _stop_worker_threads() -> void:
+    if FRIENDLY_BOID_MANAGER_THREAD == null:
+        return
+    _worker_exit_requested = true
+    _friendly_boid_wake_semaphore.post()
+    _enemy_boid_wake_semaphore.post()
+    _friendly_bolt_wake_semaphore.post()
+    _enemy_bolt_wake_semaphore.post()
+
+    _friendly_boid_done_semaphore.wait()
+    _enemy_boid_done_semaphore.wait()
+    _friendly_bolt_done_semaphore.wait()
+    _enemy_bolt_done_semaphore.wait()
+
+    if FRIENDLY_BOID_MANAGER_THREAD.is_started():
+        FRIENDLY_BOID_MANAGER_THREAD.wait_to_finish()
+    if ENEMY_BOID_MANAGER_THREAD.is_started():
+        ENEMY_BOID_MANAGER_THREAD.wait_to_finish()
+    if FRIENDLY_BOID_BOLT_MANAGER_THREAD.is_started():
+        FRIENDLY_BOID_BOLT_MANAGER_THREAD.wait_to_finish()
+    if ENEMY_BOID_BOLT_MANAGER_THREAD.is_started():
+        ENEMY_BOID_BOLT_MANAGER_THREAD.wait_to_finish()
+
+    FRIENDLY_BOID_MANAGER_THREAD = null
+    ENEMY_BOID_MANAGER_THREAD = null
+    FRIENDLY_BOID_BOLT_MANAGER_THREAD = null
+    ENEMY_BOID_BOLT_MANAGER_THREAD = null
+
+
+func _dispatch_workers(delta: float) -> void:
+    _friendly_boid_worker_delta = delta
+    _enemy_boid_worker_delta = delta
+    _friendly_bolt_worker_delta = delta
+    _enemy_bolt_worker_delta = delta
+
+    _friendly_boid_wake_semaphore.post()
+    _enemy_boid_wake_semaphore.post()
+    _friendly_bolt_wake_semaphore.post()
+    _enemy_bolt_wake_semaphore.post()
+
+    _friendly_boid_done_semaphore.wait()
+    _enemy_boid_done_semaphore.wait()
+    _friendly_bolt_done_semaphore.wait()
+    _enemy_bolt_done_semaphore.wait()
+
+
+func _exit_tree() -> void:
+    _stop_worker_threads()
+
+
 func _ready() -> void:
     Boid_Manager_Instance = self
     All_Entities_ENT = PackedByteArray()
     Ammo_COMP = PackedByteArray()
+    Friendly_Target_Enemy_Boid = PackedInt32Array()
+    Enemy_Target_Planet_ID_COMP = PackedInt32Array()
+    Target_Recheck_Timer_COMP = PackedFloat32Array()
+    Reload_Timer_COMP = PackedFloat32Array()
     Velocities_COMP = PackedVector3Array()
     Friendly_Bolts_Velocities_COMP = PackedVector4Array()
     Enemy_Bolts_Velocities_COMP = PackedVector4Array()
     
+    _initisalise_multmeshes()
     _initisalise_packed_arrays()
+    _start_worker_threads()
 
+    
+    
+    
+func _initisalise_multmeshes():
+    Friendly_MultiMesh.multimesh.mesh = Friendly_Ship_Mesh.mesh
+    Friendly_MultiMesh.multimesh.instance_count = _friendly_slots_count()
+    Friendly_MultiMesh.multimesh.visible_instance_count = _friendly_slots_count()
+    
+    Enemy_MultiMesh.multimesh.mesh = Enemy_Ship_Mesh.mesh
+    Enemy_MultiMesh.multimesh.instance_count = _enemy_slots_count()
+    Enemy_MultiMesh.multimesh.visible_instance_count = _enemy_slots_count()
+    
+
+    
+    
     
     
     
@@ -649,6 +1274,18 @@ func _initisalise_packed_arrays():
     
     Ammo_COMP.resize(MAX_NUMBER_OF_BOIDS)
     Ammo_COMP.fill(0)
+
+    Friendly_Target_Enemy_Boid.resize(MAX_NUMBER_OF_BOIDS)
+    Friendly_Target_Enemy_Boid.fill(-1)
+
+    Enemy_Target_Planet_ID_COMP.resize(MAX_NUMBER_OF_BOIDS)
+    Enemy_Target_Planet_ID_COMP.fill(-1)
+
+    Target_Recheck_Timer_COMP.resize(MAX_NUMBER_OF_BOIDS)
+    Target_Recheck_Timer_COMP.fill(0.0)
+
+    Reload_Timer_COMP.resize(MAX_NUMBER_OF_BOIDS)
+    Reload_Timer_COMP.fill(0.0)
     
     Velocities_COMP.resize(MAX_NUMBER_OF_BOIDS)
     Velocities_COMP.fill(Vector3.ZERO)
@@ -665,6 +1302,12 @@ func _initisalise_packed_arrays():
     
     Enemy_Bolts_Velocities_COMP.resize(enemy_bolts_num)
     Enemy_Bolts_Velocities_COMP.fill(Vector4(0.0, 0.0, 0.0, RETIRED_BOLT_W))
+
+    Friendly_Bolts_MultiMesh.multimesh.instance_count = friendly_bolts_num
+    Friendly_Bolts_MultiMesh.multimesh.visible_instance_count = friendly_bolts_num
+    Enemy_Bolts_MultiMesh.multimesh.instance_count = enemy_bolts_num
+    Enemy_Bolts_MultiMesh.multimesh.visible_instance_count = enemy_bolts_num
+
 
     var retired_basis_x : Vector3 = Vector3(RETIRED_BOLT_SCALE, 0.0, 0.0)
     var retired_basis_y : Vector3 = Vector3(0.0, RETIRED_BOLT_SCALE, 0.0)
@@ -701,6 +1344,38 @@ func _initisalise_packed_arrays():
         _previous_enemy_bolts_transforms_buffer[enemy_base_index + 3] = hidden_origin
         enemy_slot_index += 1
     
+    var friendly_boid_count : int = _friendly_slots_count()
+    _current_friendly_transforms_buffer.resize(friendly_boid_count * 4)
+    _previous_friendly_transforms_buffer.resize(friendly_boid_count * 4)
+    var friendly_boid_index : int = 0
+    while friendly_boid_index < friendly_boid_count:
+        var friendly_base_index : int = friendly_boid_index * 4
+        _current_friendly_transforms_buffer[friendly_base_index + 0] = Vector3.RIGHT
+        _current_friendly_transforms_buffer[friendly_base_index + 1] = Vector3.UP
+        _current_friendly_transforms_buffer[friendly_base_index + 2] = Vector3.BACK
+        _current_friendly_transforms_buffer[friendly_base_index + 3] = hidden_origin
+        _previous_friendly_transforms_buffer[friendly_base_index + 0] = Vector3.RIGHT
+        _previous_friendly_transforms_buffer[friendly_base_index + 1] = Vector3.UP
+        _previous_friendly_transforms_buffer[friendly_base_index + 2] = Vector3.BACK
+        _previous_friendly_transforms_buffer[friendly_base_index + 3] = hidden_origin
+        friendly_boid_index += 1
+
+    var enemy_boid_count : int = _enemy_slots_count()
+    _current_enemy_transforms_buffer.resize(enemy_boid_count * 4)
+    _previous_enemy_transforms_buffer.resize(enemy_boid_count * 4)
+    var enemy_boid_index : int = 0
+    while enemy_boid_index < enemy_boid_count:
+        var enemy_base_index : int = enemy_boid_index * 4
+        _current_enemy_transforms_buffer[enemy_base_index + 0] = Vector3.RIGHT
+        _current_enemy_transforms_buffer[enemy_base_index + 1] = Vector3.UP
+        _current_enemy_transforms_buffer[enemy_base_index + 2] = Vector3.BACK
+        _current_enemy_transforms_buffer[enemy_base_index + 3] = hidden_origin
+        _previous_enemy_transforms_buffer[enemy_base_index + 0] = Vector3.RIGHT
+        _previous_enemy_transforms_buffer[enemy_base_index + 1] = Vector3.UP
+        _previous_enemy_transforms_buffer[enemy_base_index + 2] = Vector3.BACK
+        _previous_enemy_transforms_buffer[enemy_base_index + 3] = hidden_origin
+        enemy_boid_index += 1
+    
     
     
 ## Check how many friendly entities we have, if we have 100 boids, 
@@ -716,6 +1391,110 @@ func _can_spawn_friendly() -> bool:
             if active_friendlies >= _friendly_pool_cap():
                 return false
         boid_index += 1
+    return true
+
+
+func Spawn_Friendly_Boid() -> bool:
+    var friendly_slot_count : int = _friendly_slots_count()
+    if friendly_slot_count <= 0:
+        return false
+
+    var free_friendly_index : int = -1
+    var boid_index : int = 0
+    while boid_index < friendly_slot_count:
+        if All_Entities_ENT[boid_index] == 0:
+            free_friendly_index = boid_index
+            break
+        boid_index += 1
+
+    if free_friendly_index == -1:
+        return false
+
+    var spawn_transform : Transform3D = Transform3D.IDENTITY
+    var spawn_origin : Vector3 = Friendly_Spawn_Point.global_position if Friendly_Spawn_Point != null else Vector3.ZERO
+    spawn_transform.origin = spawn_origin
+
+    var friendly_mothership_damageable : Damageable = targets_index.get(-5, null)
+    if friendly_mothership_damageable != null and friendly_mothership_damageable is Node3D:
+        var friendly_mothership_node : Node3D = friendly_mothership_damageable as Node3D
+        spawn_transform.basis = friendly_mothership_node.global_basis
+    elif Friendly_Spawn_Point != null:
+        spawn_transform.basis = Friendly_Spawn_Point.global_basis
+
+    var transform_base_index : int = free_friendly_index * 4
+    if (transform_base_index + 3) < _current_friendly_transforms_buffer.size():
+        _current_friendly_transforms_buffer[transform_base_index + 0] = spawn_transform.basis.x
+        _current_friendly_transforms_buffer[transform_base_index + 1] = spawn_transform.basis.y
+        _current_friendly_transforms_buffer[transform_base_index + 2] = spawn_transform.basis.z
+        _current_friendly_transforms_buffer[transform_base_index + 3] = spawn_transform.origin
+    if (transform_base_index + 3) < _previous_friendly_transforms_buffer.size():
+        _previous_friendly_transforms_buffer[transform_base_index + 0] = spawn_transform.basis.x
+        _previous_friendly_transforms_buffer[transform_base_index + 1] = spawn_transform.basis.y
+        _previous_friendly_transforms_buffer[transform_base_index + 2] = spawn_transform.basis.z
+        _previous_friendly_transforms_buffer[transform_base_index + 3] = spawn_transform.origin
+
+    All_Entities_ENT[free_friendly_index] = DEFAULT_BOID_HEALTH
+    Ammo_COMP[free_friendly_index] = clampi(Friendly_Ammo_Capacity, 0, 127)
+    Friendly_Target_Enemy_Boid[free_friendly_index] = -1
+    Enemy_Target_Planet_ID_COMP[free_friendly_index] = -1
+    Target_Recheck_Timer_COMP[free_friendly_index] = 0.0
+    Reload_Timer_COMP[free_friendly_index] = 0.0
+
+    var initial_velocity_direction : Vector3 = Vector3.UP if randf() >= 0.5 else Vector3.DOWN
+    Velocities_COMP[free_friendly_index] = initial_velocity_direction
+    return true
+
+
+func Spawn_Enemy_Boid() -> bool:
+    var first_enemy_index : int = _friendly_slots_count()
+    var enemy_slot_count : int = _enemy_slots_count()
+    if enemy_slot_count <= 0:
+        return false
+
+    var free_enemy_index : int = -1
+    var boid_index : int = first_enemy_index
+    while boid_index < MAX_NUMBER_OF_BOIDS:
+        if All_Entities_ENT[boid_index] == 0:
+            free_enemy_index = boid_index
+            break
+        boid_index += 1
+
+    if free_enemy_index == -1:
+        return false
+
+    var spawn_transform : Transform3D = Transform3D.IDENTITY
+    var spawn_origin : Vector3 = Enemy_Spawn_Point.global_position if Enemy_Spawn_Point != null else Vector3.ZERO
+    spawn_transform.origin = spawn_origin
+
+    var enemy_mothership_damageable : Damageable = targets_index.get(-6, null)
+    if enemy_mothership_damageable != null and enemy_mothership_damageable is Node3D:
+        var enemy_mothership_node : Node3D = enemy_mothership_damageable as Node3D
+        spawn_transform.basis = enemy_mothership_node.global_basis
+    elif Enemy_Spawn_Point != null:
+        spawn_transform.basis = Enemy_Spawn_Point.global_basis
+
+    var enemy_local_index : int = Normalise_Enemy_Boid_index(free_enemy_index)
+    var transform_base_index : int = enemy_local_index * 4
+    if (transform_base_index + 3) < _current_enemy_transforms_buffer.size():
+        _current_enemy_transforms_buffer[transform_base_index + 0] = spawn_transform.basis.x
+        _current_enemy_transforms_buffer[transform_base_index + 1] = spawn_transform.basis.y
+        _current_enemy_transforms_buffer[transform_base_index + 2] = spawn_transform.basis.z
+        _current_enemy_transforms_buffer[transform_base_index + 3] = spawn_transform.origin
+    if (transform_base_index + 3) < _previous_enemy_transforms_buffer.size():
+        _previous_enemy_transforms_buffer[transform_base_index + 0] = spawn_transform.basis.x
+        _previous_enemy_transforms_buffer[transform_base_index + 1] = spawn_transform.basis.y
+        _previous_enemy_transforms_buffer[transform_base_index + 2] = spawn_transform.basis.z
+        _previous_enemy_transforms_buffer[transform_base_index + 3] = spawn_transform.origin
+
+    All_Entities_ENT[free_enemy_index] = -DEFAULT_BOID_HEALTH
+    Ammo_COMP[free_enemy_index] = clampi(Enemy_Ammo_Capacity, 0, 127)
+    Friendly_Target_Enemy_Boid[free_enemy_index] = -1
+    Enemy_Target_Planet_ID_COMP[free_enemy_index] = -1
+    Target_Recheck_Timer_COMP[free_enemy_index] = 0.0
+    Reload_Timer_COMP[free_enemy_index] = 0.0
+
+    var initial_velocity_direction : Vector3 = Vector3.UP if randf() >= 0.5 else Vector3.DOWN
+    Velocities_COMP[free_enemy_index] = initial_velocity_direction
     return true
 
 
@@ -946,14 +1725,126 @@ func _flush_multimesh_buffers(do_friendlys : bool, do_bolts : bool):
         new_buffer = _current_enemy_transforms_buffer if _use_current_buffer_this_frame else _previous_enemy_transforms_buffer
         prev_buffer = _current_enemy_transforms_buffer if not _use_current_buffer_this_frame else _previous_enemy_transforms_buffer
 
-    #ta#rget_multmesh.multimesh.set_buffer_interpolated(new_buffer, prev_buffer)
+    if target_multmesh != null and target_multmesh.multimesh != null:
+        var target_instance_count : int = target_multmesh.multimesh.instance_count
+        var expected_vec3_len : int = target_instance_count * 4
+        var corrected_new_buffer : PackedVector3Array = _ensure_transform_vec3_buffer_size(new_buffer, expected_vec3_len)
+        var corrected_prev_buffer : PackedVector3Array = _ensure_transform_vec3_buffer_size(prev_buffer, expected_vec3_len)
+        var new_float_buffer : PackedFloat32Array = _convert_transform_vec3_buffer_to_float_buffer(corrected_new_buffer, target_instance_count)
+        var prev_float_buffer : PackedFloat32Array = _convert_transform_vec3_buffer_to_float_buffer(corrected_prev_buffer, target_instance_count)
+        target_multmesh.multimesh.set_buffer_interpolated(new_float_buffer, prev_float_buffer)
+
+
+func _ensure_transform_vec3_buffer_size(source_buffer: PackedVector3Array, expected_len: int) -> PackedVector3Array:
+    if source_buffer.size() == expected_len:
+        return source_buffer
+
+    var corrected_buffer : PackedVector3Array = PackedVector3Array()
+    corrected_buffer.resize(expected_len)
+    var fill_index : int = 0
+    while fill_index < expected_len:
+        var mod_index : int = fill_index % 4
+        if mod_index == 0:
+            corrected_buffer[fill_index] = Vector3.RIGHT
+        elif mod_index == 1:
+            corrected_buffer[fill_index] = Vector3.UP
+        elif mod_index == 2:
+            corrected_buffer[fill_index] = Vector3.BACK
+        else:
+            corrected_buffer[fill_index] = Vector3(-999999.0, -999999.0, -999999.0)
+        fill_index += 1
+
+    var copy_count : int = min(source_buffer.size(), expected_len)
+    var copy_index : int = 0
+    while copy_index < copy_count:
+        corrected_buffer[copy_index] = source_buffer[copy_index]
+        copy_index += 1
+    return corrected_buffer
+
+
+func _convert_transform_vec3_buffer_to_float_buffer(vec3_buffer: PackedVector3Array, instance_count: int) -> PackedFloat32Array:
+    var float_buffer : PackedFloat32Array = PackedFloat32Array()
+    float_buffer.resize(instance_count * 12)
+
+    var instance_index : int = 0
+    while instance_index < instance_count:
+        var vec_base_index : int = instance_index * 4
+        var basis_x : Vector3 = vec3_buffer[vec_base_index + 0]
+        var basis_y : Vector3 = vec3_buffer[vec_base_index + 1]
+        var basis_z : Vector3 = vec3_buffer[vec_base_index + 2]
+        var origin : Vector3 = vec3_buffer[vec_base_index + 3]
+
+        var float_base_index : int = instance_index * 12
+        float_buffer[float_base_index + 0] = basis_x.x
+        float_buffer[float_base_index + 1] = basis_y.x
+        float_buffer[float_base_index + 2] = basis_z.x
+        float_buffer[float_base_index + 3] = origin.x
+        float_buffer[float_base_index + 4] = basis_x.y
+        float_buffer[float_base_index + 5] = basis_y.y
+        float_buffer[float_base_index + 6] = basis_z.y
+        float_buffer[float_base_index + 7] = origin.y
+        float_buffer[float_base_index + 8] = basis_x.z
+        float_buffer[float_base_index + 9] = basis_y.z
+        float_buffer[float_base_index + 10] = basis_z.z
+        float_buffer[float_base_index + 11] = origin.z
+        instance_index += 1
+    return float_buffer
 
 
 
 
+
+
+func _refresh_cached_target_data() -> void:
+    var refreshed_positions : Dictionary[int, Vector3] = {}
+    var refreshed_radii : Dictionary[int, float] = {}
+    var all_target_ids : Array = targets_index.keys()
+    var i : int = 0
+    while i < all_target_ids.size():
+        var target_id : int = int(all_target_ids[i])
+        var target_damageable : Damageable = targets_index.get(target_id, null)
+        if target_damageable != null:
+            refreshed_positions[target_id] = target_damageable.global_position
+            refreshed_radii[target_id] = _estimate_damageable_hit_radius(target_damageable)
+        i += 1
+
+    _target_position_cache = refreshed_positions
+    _target_radius_cache = refreshed_radii
+
+
+func _refresh_cached_bounds_from_spatial_grid() -> void:
+    var spatial_grid : Spatial_Grid = Spatial_Grid.Get_Instance()
+    if spatial_grid == null:
+        _has_bounds_cache = false
+        return
+
+    var collision_shape : CollisionShape3D = spatial_grid.get_node_or_null("CollisionShape3D") as CollisionShape3D
+    if collision_shape == null:
+        _has_bounds_cache = false
+        return
+    if (collision_shape.shape is BoxShape3D) == false:
+        _has_bounds_cache = false
+        return
+
+    var box_shape : BoxShape3D = collision_shape.shape as BoxShape3D
+    var shape_size : Vector3 = box_shape.size
+    var world_scale : Vector3 = collision_shape.global_basis.get_scale().abs()
+    _bounds_extents_cache = Vector3(
+        max((shape_size.x * world_scale.x) * 0.5, 0.001),
+        max((shape_size.y * world_scale.y) * 0.5, 0.001),
+        max((shape_size.z * world_scale.z) * 0.5, 0.001)
+    )
+    _bounds_center_cache = collision_shape.global_position
+    _has_bounds_cache = true
 
 
 func _physics_process(delta: float) -> void:
+    _simulation_time_seconds += delta
+    _refresh_cached_target_data()
+    _refresh_cached_bounds_from_spatial_grid()
+    _dispatch_workers(delta)
+    _did_any_friendly_bolts_hit_enemies_or_mothership()
+    _did_any_enemy_bolts_hit_planet_or_mothership()
     
     # Time to do some caluclating!
     # --- Friendly boids (not BOLTS) -------------------------------------------
@@ -1006,12 +1897,37 @@ func _physics_process(delta: float) -> void:
     _flush_multimesh_buffers(true, true)
     _flush_multimesh_buffers(false, false)
     _flush_multimesh_buffers(false, true)
+    _use_current_buffer_this_frame = not _use_current_buffer_this_frame
     
 
 
 
 
+var _friendly_spawn_timer : float = 0
+var _enemy_spawn_timer : float = 0
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
-    pass
+    var _unused_delta : float = delta
+    if has_node("Camera3D/Label"):
+        var debug_label : Label = get_node("Camera3D/Label") as Label
+        if debug_label != null:
+            debug_label.text = "FPS: %d\nPhysics Tick: %d\nWorker: %s" % [
+                Engine.get_frames_per_second(),
+                Engine.physics_ticks_per_second,
+                _physics_status_text
+            ]
+        
+    
+    if _can_spawn_friendly() and _friendly_spawn_timer <= 0.0:
+        Spawn_Friendly_Boid()
+        _friendly_spawn_timer = Friendly_Respawn_Time
+        
+    if _can_spawn_enemy() and _enemy_spawn_timer <= 0.0:
+        Spawn_Enemy_Boid()
+        _enemy_spawn_timer = Enemy_Respawn_Time
+    
+    _friendly_spawn_timer -= delta
+    _enemy_spawn_timer -= delta
+    
+        
+        
