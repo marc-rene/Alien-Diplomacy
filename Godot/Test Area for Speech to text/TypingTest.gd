@@ -13,12 +13,127 @@ const ROWS: Array = [
 var ai_chat: Node = null
 var ai_busy: bool = false
 var _warming_up: bool = false
+var _token_buffer: String = ""
+var _flush_timer: float = 0.0
+const FLUSH_INTERVAL: float = 0.05
+
+# Alien voice synthesis
+var _audio_player: AudioStreamPlayer = null
+var _playback: AudioStreamGeneratorPlayback = null
+var _alien_phase: float = 0.0
+var _alien_freq: float = 300.0
+var _alien_freq_target: float = 300.0
+var _alien_wobble_timer: float = 0.0
+var _alien_next_wobble: float = 0.1
+const SAMPLE_RATE: float = 22050.0
+
+# Emotion system
+var _current_emotion: String = "neutral"
+var _emotion_freq_min: float = 150.0
+var _emotion_freq_max: float = 450.0
+var _emotion_wobble_speed: float = 0.12
+var _emotion_wobble_min: float = 0.06
+var _emotion_wobble_max: float = 0.18
+var _emotion_tremolo_speed: float = 0.008
+var _emotion_harmonic: float = 0.15
+var _emotion_check_buffer: String = ""
+
+# [freq_min, freq_max, wobble_speed, wobble_min, wobble_max, tremolo_speed, harmonic, volume_db]
+const EMOTION_PROFILES: Dictionary = {
+    "neutral":   [150.0, 450.0, 0.12, 0.06, 0.18, 0.008, 0.15, -6.0],
+    "happy":     [420.0, 950.0, 0.22, 0.03, 0.09, 0.018, 0.07, -4.0],
+    "angry":     [70.0,  240.0, 0.25, 0.02, 0.06, 0.025, 0.38, -2.0],
+    "intrigued": [220.0, 530.0, 0.06, 0.14, 0.30, 0.004, 0.09, -7.0],
+    "menacing":  [50.0,  150.0, 0.04, 0.20, 0.45, 0.002, 0.42, -3.0],
+}
 
 
 func _ready() -> void:
     line_edit.virtual_keyboard_enabled = false
+    _setup_audio()
     _setup_nobodywho()
     _build_keyboard()
+
+
+func _setup_audio() -> void:
+    var gen := AudioStreamGenerator.new()
+    gen.mix_rate = SAMPLE_RATE
+    gen.buffer_length = 0.15
+    _audio_player = AudioStreamPlayer.new()
+    _audio_player.stream = gen
+    _audio_player.volume_db = -6.0
+    add_child(_audio_player)
+
+
+func _set_emotion(emotion: String) -> void:
+    if emotion == _current_emotion:
+        return
+    _current_emotion = emotion
+    var p: Array = EMOTION_PROFILES[emotion]
+    _emotion_freq_min    = p[0]
+    _emotion_freq_max    = p[1]
+    _emotion_wobble_speed = p[2]
+    _emotion_wobble_min  = p[3]
+    _emotion_wobble_max  = p[4]
+    _emotion_tremolo_speed = p[5]
+    _emotion_harmonic    = p[6]
+    if _audio_player:
+        _audio_player.volume_db = p[7]
+
+
+func _detect_emotion(text: String) -> String:
+    var t := text.to_lower()
+    var scores := {"neutral": 0, "happy": 0, "angry": 0, "intrigued": 0, "menacing": 0}
+    for w in ["haha", "excellent", "good", "grand", "victory", "treasure", "pleased", "splendid", "brilliant", "ha"]:
+        if t.contains(w): scores["happy"] += 1
+    for w in ["fool", "insolent", "destroy", "blast", "worthless", "scum", "pathetic", "useless", "incompetent", "rage"]:
+        if t.contains(w): scores["angry"] += 1
+    for w in ["interesting", "curious", "hmm", "wonder", "fascinating", "strange", "peculiar", "unusual", "tell me", "explain"]:
+        if t.contains(w): scores["intrigued"] += 1
+    for w in ["beware", "suffer", "doom", "fear", "dread", "surrender", "perish", "darkness", "warning", "threat"]:
+        if t.contains(w): scores["menacing"] += 1
+    var best := "neutral"
+    var best_score := 0
+    for emotion in scores:
+        if scores[emotion] > best_score:
+            best_score = scores[emotion]
+            best = emotion
+    return best
+
+
+func _start_alien_voice() -> void:
+    _set_emotion("neutral")
+    _emotion_check_buffer = ""
+    _alien_freq = randf_range(_emotion_freq_min, _emotion_freq_max)
+    _alien_freq_target = _alien_freq
+    _alien_phase = 0.0
+    _audio_player.play()
+    _playback = _audio_player.get_stream_playback()
+
+
+func _stop_alien_voice() -> void:
+    _audio_player.stop()
+    _playback = null
+
+
+func _fill_alien_audio(delta: float) -> void:
+    if _playback == null:
+        return
+    _alien_wobble_timer += delta
+    if _alien_wobble_timer >= _alien_next_wobble:
+        _alien_wobble_timer = 0.0
+        _alien_next_wobble = randf_range(_emotion_wobble_min, _emotion_wobble_max)
+        _alien_freq_target = randf_range(_emotion_freq_min, _emotion_freq_max)
+    _alien_freq = lerpf(_alien_freq, _alien_freq_target, _emotion_wobble_speed)
+    var frames := _playback.get_frames_available()
+    for i in frames:
+        _alien_phase = fmod(_alien_phase + _alien_freq / SAMPLE_RATE, 1.0)
+        var s := sin(_alien_phase * TAU) * 0.5
+        s += sin(_alien_phase * TAU * 2.1) * _emotion_harmonic
+        s += sin(_alien_phase * TAU * 3.3) * (_emotion_harmonic * 0.5)
+        var tremolo := sin(Time.get_ticks_msec() * _emotion_tremolo_speed) * 0.35 + 0.65
+        s *= tremolo * 0.35
+        _playback.push_frame(Vector2(s, s))
 
 
 var _last_tried_paths: Array[String] = []
@@ -213,15 +328,35 @@ func _send_message() -> void:
     chat_label.append_text("[color=cyan]You:[/color] " + msg + "\n")
     chat_label.append_text("[color=cyan]Space Pirate Commander:[/color] ")
     ai_chat.ask(msg)
+    _start_alien_voice()
+
+
+func _process(delta: float) -> void:
+    if not _token_buffer.is_empty():
+        _flush_timer += delta
+        if _flush_timer >= FLUSH_INTERVAL:
+            chat_label.append_text(_token_buffer)
+            _token_buffer = ""
+            _flush_timer = 0.0
+    if ai_busy and not _warming_up:
+        _fill_alien_audio(delta)
 
 
 func _on_response_updated(new_token: String) -> void:
     if _warming_up:
         return
-    chat_label.append_text(new_token)
+    _token_buffer += new_token
+    _emotion_check_buffer += new_token
+    if _emotion_check_buffer.length() > 80:
+        _set_emotion(_detect_emotion(_emotion_check_buffer))
+        _emotion_check_buffer = ""
 
 
 func _on_response_finished(_response: String) -> void:
+    _stop_alien_voice()
+    if not _token_buffer.is_empty():
+        chat_label.append_text(_token_buffer)
+        _token_buffer = ""
     if _warming_up:
         _warming_up = false
         ai_busy = false
