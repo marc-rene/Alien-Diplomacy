@@ -24,11 +24,11 @@ var max_friendly_count := 0
 @export var Enemy_MultiMesh : MultiMeshInstance3D
 
 ## What percentage of Enemies can we spawn? 1.0 means spawn everyone
-static var Enemy_Pool_Amount : float = 0.2
+static var Enemy_Pool_Amount : float = 0.01
 
-@export var max_speed := 2.0
-@export var banking := 0.05
-@export var mass := 2.0
+@export var max_speed :float = 2.0
+@export var banking : float = 0.05
+@export var mass : float = 2.0
 
 var temp_friend_mesh_push_buffer : PackedFloat32Array
 var temp_enemy_mesh_push_buffer : PackedFloat32Array
@@ -629,12 +629,14 @@ func spawn_enemy(force_spawn = false) -> bool:
 static func Increase_Enemy_Pool_Size(new_amount: float):
     Enemy_Pool_Amount += new_amount
     Enemy_Pool_Amount = clampf(Enemy_Pool_Amount, 0.0001, 1.0)
+    print("ENEMY POOL SIZE INCREASED TO " + str(Enemy_Pool_Amount * 100) + "%" )
     
 
 ## Decrease pool by X percent
 static func Decrease_Enemy_Pool_Size(reduction_amount : float):
     Enemy_Pool_Amount -= reduction_amount
     Enemy_Pool_Amount = clampf(Enemy_Pool_Amount, 0.0001, 1.0)
+    print("Enemy Pool size decreased to " + str(Enemy_Pool_Amount * 100) + "%" )
 
 static var IS_PEACE_ACHIEVED : bool = false
 

@@ -12,7 +12,7 @@ enum FloatMode {
 @export var arrive_distance : float = 0.25
 @export var repick_seconds : float = 20.0
 @export var enemy_shell_thickness : float = 3.0
-@export var friendly_planet_safety_multiplier : float = 1.2
+@export var friendly_planet_safety_multiplier : float = 1.8
 
 @export var DEBUG_Marker_Mesh : MeshInstance3D = null
 @export var Solar_System_Root : Node3D = null
@@ -173,6 +173,10 @@ func _cache_planets() -> void:
     for child in Solar_System_Root.get_children():
         if child is MeshInstance3D:
             planets.push_back(child as MeshInstance3D)
+    if self == %"Friendly MotherShip":
+        planets.push_back(%"Enemy MotherShip")
+    else:
+        planets.push_back(%"Friendly MotherShip")
 
 
 func _pick_new_target() -> void:
