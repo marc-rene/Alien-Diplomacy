@@ -53,6 +53,10 @@ static func How_Many_Boids() -> int:
 static func How_Many_Boids_Active() -> int:
     return boid_manager_instance.eeees + boid_manager_instance.french
 
+
+var friendly_boid_target_node : Node3D
+var enemy_boid_target_node : Node3D
+
 # SO here's the naming convention
 # Entities will end in _ent
 # componenets (like velocity, etc...) end with _comp
@@ -197,6 +201,35 @@ var eeees = 0
 var frame_time_switches : int = 0
 var update_physics_score : float = 1
 
+## We only ever fly to one target at a time, so we only ever pulse the
+## one Damageable that is currently being targeted.
+var _currently_pulsing_target : Damageable = null
+
+
+func _resolve_damageable_for_target_node(target_node: Node) -> Damageable:
+    if target_node == null:
+        return null
+    if target_node is Damageable:
+        return target_node as Damageable
+    var parent_node : Node = target_node.get_parent()
+    if parent_node != null and parent_node is Damageable:
+        return parent_node as Damageable
+    return null
+
+
+func _set_currently_pulsing_target(new_target_node: Node) -> void:
+    var new_damageable : Damageable = _resolve_damageable_for_target_node(new_target_node)
+    if new_damageable == _currently_pulsing_target:
+        return
+
+    if _currently_pulsing_target != null and is_instance_valid(_currently_pulsing_target):
+        _currently_pulsing_target.Stop_Pulse_Targeted_Red()
+
+    _currently_pulsing_target = new_damageable
+
+    if _currently_pulsing_target != null:
+        _currently_pulsing_target.Pulse_Targeted_Red()
+
 func _process(delta: float) -> void:
     
     Enemy_MultiMesh.multimesh.visible_instance_count = int(clampf(Enemy_Pool_Amount, 0.0, 1.0) * (Max_Num_Boids - (Max_Num_Boids * Friendly_Enemy_Count_Ratio)))
@@ -213,8 +246,6 @@ func _process(delta: float) -> void:
             print("STOPPED FRENCH")
     if spawn_enemy(): 
         eeees += 1
-
-            
     
     cam_point = get_boid_transform(max_friendly_count)
     frame_fence += 1
@@ -301,6 +332,7 @@ func _process(delta: float) -> void:
                 OFFSETS_comp[i] += 1
     
     if frame_fence % 1000 == 0: 
+        
         print("FPS: " + str(Engine.get_frames_per_second()) )
         print("Homies: " + str(Friendly_MultiMesh.multimesh.instance_count) + "\tbuffer size: " + str(Friendly_MultiMesh.multimesh.buffer.size()))
         print("Enemies: " + str(Enemy_MultiMesh.multimesh.instance_count) + "\tbuffer size: " + str(Enemy_MultiMesh.multimesh.buffer.size()))
@@ -314,17 +346,25 @@ func _process(delta: float) -> void:
         #for child in potential_targets:
             #print("Options for boids to target is: " + child.name)
             
-        var target_node_marker : Node3D
+        var target_node_marker : Node3D = null
         var target_planet : Node = potential_targets.pick_random()
         if target_planet.has_node("Boid_Target"):
-            target_node_marker = target_planet.get_node("Boid_Target")
+            target_node_marker = target_planet.get_node("Boid_Target") as Node3D
             print("NEW TARGET FOUND! " + target_planet.name + " - " +  target_node_marker.name)
+        elif target_planet is Node3D:
+            target_node_marker = target_planet as Node3D
+            print("NEW TARGET FOUND! " + target_planet.name)
         
-        friendly_pos = target_node_marker.global_position
-    
-        enemy_pos = target_node_marker.global_position - target_node_marker.position
-        
+        if target_node_marker != null:
+            friendly_boid_target_node = target_node_marker
+            enemy_boid_target_node = target_node_marker
+            _set_currently_pulsing_target(target_planet)
         frame_fence = 0
+        
+    if friendly_boid_target_node:
+        friendly_pos = friendly_boid_target_node.global_position
+    if enemy_boid_target_node:
+        enemy_pos = enemy_boid_target_node.global_position - enemy_boid_target_node.position
         #for i in range(Max_Num_Boids / 2):
             #OFFSETS_comp[i * 2 - 1] = OFFSETS_comp[i] * -1.1 
             #OFFSETS_comp[i+1] = OFFSETS_comp[i+1] * 1.01 
@@ -358,83 +398,8 @@ var prev_struggle : int = 999999
 const frames_before_change : int = 100
 var physics_fence : int = 0
 func _physics_process(delta: float) -> void:
-    #struggling_level = int(Engine.get_frames_per_second() / 10)
-        #
-    #if (struggling_level <= 2 and physics_fence >= frames_before_change):
-        #Engine.physics_ticks_per_second = clamp(int(starting_physics_tick * 0.1), 1, 100)
-        #physics_fence = 0
-    #elif (struggling_level < 3 and physics_fence >= frames_before_change):
-        #Engine.physics_ticks_per_second = clamp(int(starting_physics_tick * 0.3), 1, 100)
-        #physics_fence = 0
-    #elif (struggling_level < 4 and physics_fence >= frames_before_change):
-        #Engine.physics_ticks_per_second = clamp(int(starting_physics_tick * 0.5), 1, 100)
-        #physics_fence = 0
-    #elif (struggling_level < 5 and physics_fence >= frames_before_change):
-        #Engine.physics_ticks_per_second = clamp(int(starting_physics_tick * 0.7), 1, 100)
-        #physics_fence = 0
-    #elif (struggling_level < 6 and physics_fence >= frames_before_change):
-        #Engine.physics_ticks_per_second = clamp(int(starting_physics_tick * 0.9), 1, 100)
-        #physics_fence = 0
-    #elif physics_fence >= frames_before_change:
-        #Engine.physics_ticks_per_second = starting_physics_tick
-        #physics_fence = 0
         
     physics_fence += 1   
-    
-    #print("Struggling: " + str(Engine.get_frames_per_second()) + "/ 10 = " + str(struggling_level) + " < " + str(prev_struggle) + "\t\t#" + str(physics_fence))
-    #match struggling_level:
-        #0:
-            #if struggling_level != prev_struggle and physics_fence >= frames_before_change:
-                #prev_struggle = struggling_level
-                #printerr("OH MY SWEET HOVERING JESUS STRUGGLING")
-                #Engine.max_physics_steps_per_frame = 1
-                ##Engine.physics_ticks_per_second = 3
-                #physics_fence = 0
-            #physics_fence += 1
-        #1:
-            #if struggling_level != prev_struggle and physics_fence >= frames_before_change :
-                #prev_struggle = struggling_level
-                #printerr("DAMN STRUGGLING")
-                #Engine.max_physics_steps_per_frame = 1
-                ##Engine.physics_ticks_per_second = 5
-                #physics_fence = 0
-            #physics_fence += 1
-        #2:
-            #if struggling_level != prev_struggle and physics_fence >= frames_before_change :
-                #prev_struggle = struggling_level
-                #printerr("Damn... Kinda struggling")
-                #Engine.max_physics_steps_per_frame = 1
-                #Engine.physics_ticks_per_second = 10
-                #physics_fence = 0
-            #physics_fence += 1
-        #3:
-            #if struggling_level != prev_struggle and physics_fence >= frames_before_change:
-                #prev_struggle = struggling_level
-                #printerr("...This is getting worrying?")
-                #Engine.max_physics_steps_per_frame = 2
-                #Engine.physics_ticks_per_second = 15
-                #physics_fence = 0
-            #physics_fence += 1
-        #4:
-            #if struggling_level != prev_struggle and physics_fence >= frames_before_change:
-                #prev_struggle = struggling_level
-                #printerr("Slowing down a smidge?")
-                #Engine.max_physics_steps_per_frame = 3
-                #Engine.physics_ticks_per_second = 25
-                #physics_fence = 0
-            #physics_fence += 1
-        #_:
-            #if struggling_level != prev_struggle and physics_fence >= frames_before_change:
-                #printerr("looks..... peachy?")
-                #prev_struggle = struggling_level
-                #Engine.max_physics_steps_per_frame = 3
-                #Engine.physics_ticks_per_second = 30
-                #physics_fence = 0
-            #physics_fence += 1
-        
-            
-            
-            
             
         
     for ent in range(Max_Num_Boids):
@@ -448,9 +413,9 @@ func _physics_process(delta: float) -> void:
         #target_pos.z = randfn(target_pos.z, 1.0)        
         #var to_target = make_blurry(target_node.global_position, 1.0 / ((ent % 20) + 1)) - get_boid_transform(ent).origin
         to_target = target_pos - new_trans.origin
-        to_target.x += (randf_range(0.001, 3.1) * OFFSETS_comp[ent])
-        to_target.y += (randf_range(0.001, 3.5) * OFFSETS_comp[ent])
-        to_target.z += (randf_range(0.001, 3.1) * OFFSETS_comp[ent])
+        to_target.x += clampf((randf_range(0.001, 1.1) * OFFSETS_comp[ent]), 0.0, 1)
+        to_target.y += clampf((randf_range(-1.8, 1.8) * OFFSETS_comp[ent]), -1.0, 2)
+        to_target.z += clampf((randf_range(0.001, 1.1) * OFFSETS_comp[ent]), -1.0, 1)
         desried = to_target.normalized() * max_speed # max speed
         
         force = desried - VELOCITIES_comp[ent]
@@ -548,7 +513,7 @@ func set_boid_transform(ship_entity_index : int, new_transform : Transform3D):
     
     
 func spawn_ship(force_spawn : bool, p_is_friendly : bool) -> bool:
-    var free_index : int
+    var free_index : int = -1
     
     if p_is_friendly:
         free_index = ALL_ENTITIES_ent.find(0) # any dead decatived boids?
@@ -600,31 +565,35 @@ func spawn_ship(force_spawn : bool, p_is_friendly : bool) -> bool:
     cur_buffer_to_init = temp_friend_mesh_push_buffer if p_is_friendly else temp_enemy_mesh_push_buffer
     old_buffer_to_init = prev_friend_mesh_push_buffer if p_is_friendly else prev_enemy_mesh_push_buffer
     
-    cur_buffer_to_init[(12 * free_index) + 0] = start_transform.basis.x.x
-    cur_buffer_to_init[(12 * free_index) + 1] = start_transform.basis.y.x
-    cur_buffer_to_init[(12 * free_index) + 2] = start_transform.basis.z.x
-    cur_buffer_to_init[(12 * free_index) + 3] = start_transform.origin.x
-    cur_buffer_to_init[(12 * free_index) + 4] = start_transform.basis.x.y
-    cur_buffer_to_init[(12 * free_index) + 5] = start_transform.basis.y.y
-    cur_buffer_to_init[(12 * free_index) + 6] = start_transform.basis.z.y
-    cur_buffer_to_init[(12 * free_index) + 7] = start_transform.origin.y
-    cur_buffer_to_init[(12 * free_index) + 8] = start_transform.basis.x.z
-    cur_buffer_to_init[(12 * free_index) + 9] = start_transform.basis.y.z
-    cur_buffer_to_init[(12 * free_index) + 10] = start_transform.basis.z.z
-    cur_buffer_to_init[(12 * free_index) + 11] = start_transform.origin.z
+    var start_index = free_index
+    if not p_is_friendly:
+        start_index -= max_friendly_count
     
-    old_buffer_to_init[(12 * free_index) + 0] = start_transform.basis.x.x
-    old_buffer_to_init[(12 * free_index) + 1] = start_transform.basis.y.x
-    old_buffer_to_init[(12 * free_index) + 2] = start_transform.basis.z.x
-    old_buffer_to_init[(12 * free_index) + 3] = start_transform.origin.x
-    old_buffer_to_init[(12 * free_index) + 4] = start_transform.basis.x.y
-    old_buffer_to_init[(12 * free_index) + 5] = start_transform.basis.y.y
-    old_buffer_to_init[(12 * free_index) + 6] = start_transform.basis.z.y
-    old_buffer_to_init[(12 * free_index) + 7] = start_transform.origin.y
-    old_buffer_to_init[(12 * free_index) + 8] = start_transform.basis.x.z
-    old_buffer_to_init[(12 * free_index) + 9] = start_transform.basis.y.z
-    old_buffer_to_init[(12 * free_index) + 10] = start_transform.basis.z.z
-    old_buffer_to_init[(12 * free_index) + 11] = start_transform.origin.z
+    cur_buffer_to_init[(12 * start_index) + 0] = start_transform.basis.x.x
+    cur_buffer_to_init[(12 * start_index) + 1] = start_transform.basis.y.x
+    cur_buffer_to_init[(12 * start_index) + 2] = start_transform.basis.z.x
+    cur_buffer_to_init[(12 * start_index) + 3] = start_transform.origin.x
+    cur_buffer_to_init[(12 * start_index) + 4] = start_transform.basis.x.y
+    cur_buffer_to_init[(12 * start_index) + 5] = start_transform.basis.y.y
+    cur_buffer_to_init[(12 * start_index) + 6] = start_transform.basis.z.y
+    cur_buffer_to_init[(12 * start_index) + 7] = start_transform.origin.y
+    cur_buffer_to_init[(12 * start_index) + 8] = start_transform.basis.x.z
+    cur_buffer_to_init[(12 * start_index) + 9] = start_transform.basis.y.z
+    cur_buffer_to_init[(12 * start_index) + 10] = start_transform.basis.z.z
+    cur_buffer_to_init[(12 * start_index) + 11] = start_transform.origin.z
+    
+    old_buffer_to_init[(12 * start_index) + 0] = start_transform.basis.x.x
+    old_buffer_to_init[(12 * start_index) + 1] = start_transform.basis.y.x
+    old_buffer_to_init[(12 * start_index) + 2] = start_transform.basis.z.x
+    old_buffer_to_init[(12 * start_index) + 3] = start_transform.origin.x
+    old_buffer_to_init[(12 * start_index) + 4] = start_transform.basis.x.y
+    old_buffer_to_init[(12 * start_index) + 5] = start_transform.basis.y.y
+    old_buffer_to_init[(12 * start_index) + 6] = start_transform.basis.z.y
+    old_buffer_to_init[(12 * start_index) + 7] = start_transform.origin.y
+    old_buffer_to_init[(12 * start_index) + 8] = start_transform.basis.x.z
+    old_buffer_to_init[(12 * start_index) + 9] = start_transform.basis.y.z
+    old_buffer_to_init[(12 * start_index) + 10] = start_transform.basis.z.z
+    old_buffer_to_init[(12 * start_index) + 11] = start_transform.origin.z
 
     set_boid_transform(free_index, start_transform)
     
@@ -640,7 +609,7 @@ func spawn_friendly(force_spawn = false) -> bool:
 
 func spawn_enemy(force_spawn = false) -> bool:
     var max_num_enemies_allowed : int = Enemy_Pool_Amount * (Max_Num_Boids - (Max_Num_Boids * Friendly_Enemy_Count_Ratio))
-    if eeees < max_num_enemies_allowed:
+    if eeees < (max_num_enemies_allowed - 1):
         return spawn_ship(force_spawn, false)
     else:
         return false
@@ -650,7 +619,7 @@ func spawn_enemy(force_spawn = false) -> bool:
 func Increase_Enemy_Pool_Size(new_amount: float):
     Enemy_Pool_Amount += new_amount
     Enemy_Pool_Amount = clampf(Enemy_Pool_Amount, 0.0001, 1.0)
-    Enemy_MultiMesh.multimesh.visible_instance_count = (Enemy_Pool_Amount * (Max_Num_Boids * Friendly_Enemy_Count_Ratio))
+    
 
 ## Decrease pool by X percent
 func Decrease_Enemy_Pool_Size(reduction_amount : float):

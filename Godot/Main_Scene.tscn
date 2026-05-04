@@ -303,6 +303,7 @@ size = Vector3(10, 5, 10)
 environment = SubResource("Environment_tkmsp")
 
 [node name="Player" parent="." unique_id=1047638996 instance=ExtResource("1_8sucx")]
+transform = Transform3D(-0.9998611, 0, 0.016667223, 0, 1, 0, -0.016667223, 0, -0.9998611, 0, 0, -11.386995)
 current = true
 
 [node name="OffbrandSolarSystem" type="Node3D" parent="." unique_id=1892502979]
@@ -432,6 +433,7 @@ transform = Transform3D(0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, 0, 0, 0)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
 
 [node name="Ships Canons Particles" type="GPUParticles3D" parent="." unique_id=605088348]
+process_mode = 4
 sub_emitter = NodePath(".")
 interp_to_end = 1.0
 process_material = SubResource("ShaderMaterial_3qyon")
@@ -446,6 +448,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8000375, 0, 0)
 mesh = SubResource("TorusMesh_wtuui")
 
 [node name="Spatial Partitioning Grid" type="Area3D" parent="." unique_id=1605348482]
+process_mode = 4
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0337555, 0)
 script = ExtResource("14_kj35w")
 DEBUG_Show_Highlight_material_at_active_grid = true
@@ -456,6 +459,7 @@ shape = SubResource("BoxShape3D_kj35w")
 
 [node name="Old_Scuffed_Boids" type="Node3D" parent="." unique_id=702924345 node_paths=PackedStringArray("Friendly_Spawn_Point", "Friendly_Mesh", "Friendly_MultiMesh", "Enemy_Spawn_Point", "Enemy_Mesh", "Enemy_MultiMesh")]
 script = ExtResource("15_wtuui")
+Max_Num_Boids = 1000
 Friendly_Spawn_Point = NodePath("../Friendly MotherShip")
 Friendly_Mesh = NodePath("../Boid Manager/Friendly_Ship/Friendly Space Fighter")
 Friendly_MultiMesh = NodePath("../Boid Manager/Friendly_mult_mesh")
