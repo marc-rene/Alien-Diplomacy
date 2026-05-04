@@ -1,6 +1,7 @@
 [gd_scene format=4 uid="uid://dmnqq8qs43a8"]
 
 [ext_resource type="PackedScene" uid="uid://cdkojrqd5o300" path="res://Player/Player.tscn" id="1_8sucx"]
+[ext_resource type="Script" uid="uid://i83bv0anfo3b" path="res://Test Area for Speech to text/main.gd" id="1_n0v1a"]
 [ext_resource type="Script" uid="uid://bwwd6u40q6jog" path="res://Art/Planets/Solar_System.gd" id="2_3qyon"]
 [ext_resource type="PackedScene" uid="uid://14ag1dkvekeb" path="res://Art/Planets/Planet-Earthy.tscn" id="2_7fr83"]
 [ext_resource type="PackedScene" uid="uid://c0ygdpy0qlwxa" path="res://Art/Planets/Planet-Moony.tscn" id="3_tkmsp"]
@@ -34,6 +35,85 @@ ambient_light_source = 2
 ambient_light_color = Color(1, 1, 1, 1)
 reflected_light_source = 1
 tonemap_mode = 1
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_iwv2q"]
+resource_name = "Ship"
+cull_mode = 2
+vertex_color_use_as_albedo = true
+albedo_color = Color(9.144843e-06, 0.9782645, 0.059562556, 1)
+metallic = 0.9
+roughness = 0.6
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_40qhu"]
+_surfaces = [{
+"aabb": AABB(-0.10413016, -0.02742578, -0.096429996, 0.22454607, 0.07544467, 0.26962623),
+"format": 34896613377,
+"index_count": 72,
+"index_data": PackedByteArray("AAABAAIAAgABAAMAAwABAAQAAAAEAAEABQADAAQAAgADAAUABQAEAAAABQAGAAIAAAAHAAUAAgAGAAgACAAAAAIACQAGAAUABQAHAAkACAAGAAkACgAHAAAACQAHAAoACAAKAAAACgALAAkACQALAAgACgAMAAsACAAMAAoACwAMAA0ACAANAAwACAALAA0A"),
+"name": "Ship",
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 14,
+"vertex_data": PackedByteArray("L3L5qowaAADPjer/ABcAAM+N+aqMGgAA/3///wAAAAAvcur/ABcAAP9/N1nzHAAA///kqy00AAAAAOSrLTQAADOiesqLbwAA/38AAH11AADLXXrKi28AAP9/QYPLxAAA9XimqP//AAAJh6ao//8AAA==")
+}]
+blend_shape_mode = 0
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_7balh"]
+resource_name = "Friendly_Ship_Cube_001"
+_surfaces = [{
+"aabb": AABB(-0.10413016, -0.02742578, -0.096429996, 0.22454607, 0.07544467, 0.26962623),
+"attribute_data": PackedByteArray("bY+8PQSjAAAEo7w9bY8AANKjB3/aoYvBUHPGZnqxgIY6lP//94CAhjae///3gICGcz52U22PvD16sYCGbY+8PQSjvD33gICGOJntzDqU//82nv//UHOAhl2L7czSo4CG9o7//9KjgIZdi+3MUHOAhvaO//84mYCG/vN2UziZvD0Eo7w9/vN2U3qxgIZTkMZm2qGLweqjkXBQc8Zm2qEADNKjhE7qo/pc2qEADFOQxmY4mbw9cz52UziZgIZMnMZmWKqRcFiq+lzqo7w9TJymDVOQvD1YqgAAU5C8PViqAADqo7w9TJymDQ=="),
+"format": 34896613399,
+"index_count": 72,
+"index_data": PackedByteArray("AAABAAIAAAADAAEABAAFAAYABwAIAAkABwAKAAgACwAMAA0ADgAPABAADgARAA8AEgATABQAFQAWABcAFwAWABgAGQAaABsAGQAcABoAHQAeAB8AIAAhACIAIwAkACUAJgAnACgAKQAqACsALAAtAC4ALwAwADEAMgAzADQAMgA1ADMANgA3ADgANgA5ADcA"),
+"material": SubResource("StandardMaterial3D_iwv2q"),
+"name": "Ship",
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 58,
+"vertex_data": PackedByteArray("L3L5qowaCIbPjer/ABcIhs+N+aqMGgiGL3Lq/wAXCIYzonrKi29Px///5KstNE/H/38AAH11T8czonrKi29UvfV4pqj//1S9y116yotvVL0Jh6ao//9UvctdesqLb27EAADkqy00bsQvcvmqjBpuxDOiesqLbzXEL3L5qowaNcTPjfmqjBo1xMtdesqLbzXE/39Bg8vEIUf1eKao//8hRwmHpqj//yFH/38AAH119Tz/f0GDy8RuPTOiesqLbw49CYemqP//jz3LXXrKi29V5P9/QYPLxO7k/38AAH11LeT1eKao//8k5f9/AAB9db00///kqy00vTT/fzdZ8xy9NM+N+aqMGm7E///kqy00bsQzonrKi29uxP9/N1nzHCIO///kqy00Ig7PjfmqjBoiDv9/AAB9dUvBAADkqy00S8HLXXrKi29LwS9y+aqMGpcAAADkqy00lwD/fzdZ8xyXAP9/N1nzHL00AADkqy00vTT/fwAAfXW9NP9///8AALAqz43q/wAXsCovcur/ABewKs+N+aqMGu0a/3///wAAgQ//fzdZ8xxeH8+N6v8AF0MF/383WfMcr9kvcur/ABcG2S9y+aqMGsjp/3///wAA4tj+//9//v//f////3/+//9/aA4fImgOHyJoDh8i////f////3////9/////f4H+I4OB/iODgf4jg////3/+//9//v//f////38AAP9/AAD/fwAA/3+QIog6eiNdOsAigDq8I1E6bdLt5N3SkORQ0gXlBNNv5J4PzGaeD8xmng/MZtv8gX7b/IF+2/yBfqRAsD6kQLA+pECwPh7c2PAe3NjwHtzY8OzHLsbsxy7G7McuxjMZno8zGZ6PMxmej6aqpqqmqqaqpqqmqqIgiUOgB3hRzitQPTYOZLWwZ2nyGWPU57nGE9cAYf7i")
+}]
+blend_shape_mode = 0
+shadow_mesh = SubResource("ArrayMesh_40qhu")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_n0v1a"]
+resource_name = "Ship"
+vertex_color_use_as_albedo = true
+albedo_color = Color(1, 0.39770123, 0.3292555, 1)
+metallic = 0.15
+roughness = 0.6
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_0clxy"]
+_surfaces = [{
+"aabb": AABB(-0.11479115, -0.060121693, -0.20254757, 0.22454429, 0.08781182, 0.39748093),
+"format": 34896613377,
+"index_count": 72,
+"index_data": PackedByteArray("AAABAAIAAgABAAMAAwABAAQAAAAEAAEABQADAAQAAgADAAUABQAEAAAABQAGAAIABwAAAAIAAgAGAAcAAAAIAAUACQAGAAUABQAIAAkABwAGAAkACgAIAAAABwAKAAAACQAIAAoACQALAAcABwAMAAoACgAMAAkABwALAAwACQANAAsADQAMAAsACQAMAA0A"),
+"name": "Ship",
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 14,
+"vertex_data": PackedByteArray("cy7//9diAACpjmJZEAAAAMzR//85YwAAxYC5JucKAAAKc2JZAAAAAIOAO4hALgAA//8rqKN0AABJp0Wv//8AAAAAK6gKdAAAs39aAP+cAADiYkWv1f8AAF2GlS+szwAASXiVL6PPAAD7fgAAiP4AAA==")
+}]
+blend_shape_mode = 0
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_f76pn"]
+resource_name = "Enemy_Ship_Cube_001"
+_surfaces = [{
+"aabb": AABB(-0.11479115, -0.060121693, -0.20254757, 0.22454429, 0.08781182, 0.39748093),
+"attribute_data": PackedByteArray("bY+8PQSjAAAEo7w9bY8AANKjB3/aoYvBUHPGZnqxgIY6lP//94CAhjae///3gICGcz52U22PvD16sYCGbY+8PQSjvD33gICGOJntzDqU//82nv//UHOAhvaO///So4CGXYvtzNKjgIb2jv//UHOAhl2L7cw4mYCG/vN2UziZvD0Eo7w9/vN2U3qxgIZTkMZm2qGLweqjkXBQc8Zm2qEADNKjhE7qo/pc2qEADFOQxmY4mbw9cz52UziZgIZMnMZmWKqRcFiq+lzqo7w9TJymDVOQvD1YqgAAU5C8PViqAADqo7w9TJymDQ=="),
+"format": 34896613399,
+"index_count": 72,
+"index_data": PackedByteArray("AAABAAIAAAADAAEABAAFAAYABwAIAAkABwAKAAgACwAMAA0ADgAPABAADgARAA8AEgATABQAFQAWABcAFQAYABYAGQAaABsAGwAaABwAHQAeAB8AIAAhACIAIwAkACUAJgAnACgAKQAqACsALAAtAC4ALwAwADEAMgAzADQAMgA1ADMANgA3ADgANgA5ADcA"),
+"material": SubResource("StandardMaterial3D_n0v1a"),
+"name": "Ship",
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 58,
+"vertex_data": PackedByteArray("cy7//9digM6pjmJZEACAzszR//85Y4DOCnNiWQAAgM5Jp0Wv//9b3P//K6ijdFvcs39aAP+cW9xJp0Wv//9xqkl4lS+jz3Gq4mJFr9X/capdhpUvrM9xquJiRa/V/3W4AAArqAp0dbhzLv//12J1uEmnRa///2K7cy7//9diYrvM0f//OWNiu+JiRa/V/2K7+34AAIj+/EhJeJUvo8/8SF2GlS+sz/xIs39aAP+cOPNdhpUvrM8480mnRa///5Ub+34AAIj+OPPiYkWv1f//xUl4lS+jzy8/s39aAP+cLz/7fgAAiP4vP7N/WgD/nJ8w//8rqKN0nzCDgDuIQC6fMMzR//85YyW5//8rqKN0JblJp0Wv//8luYOAO4hALmcD//8rqKN0ZwPM0f//OWNnA7N/WgD/nGTEAAArqAp0ZMTiYkWv1f9kxHMu///XYrAfAAArqAp0sB+DgDuIQC6wH4OAO4hALqQwAAArqAp0pDCzf1oA/5ykMMWAuSbnCgsWqY5iWRAACxYKc2JZAAALFszR//85Y2A8xYC5JucKrz6DgDuIQC4JOqmOYlkQAKw/g4A7iEAuwtsKc2JZAACR5XMu///XYtfZxYC5JucKoeyM/y+AjP8vgIz/L4CM/y+AJBYiziQWIs4kFiLOdQC4gHUAuIB1ALiAdQC4gALHWLECx1ixAsdYsW//S4Bv/0uAb/9LgG//S4Bm/1OAZv9TgGb/U4BmEYzKZhGMyoYDXb9mEYzKBaRx/41bbumNW27pjVtu6VcGdKNXBnSjVwZ0o+fNJUbnzSVG580lRkPLYJRDy2CUQ8tglLI6HuWyOh7lsjoe5TqaHOE6mhzhOpoc4fEi53nxIud58SLnebRKy0q0SstKtErLStAI7LmKBUu1oAvmvfADCLPqOCL4X8a3/ow4VfaTysr4")
+}]
+blend_shape_mode = 0
+shadow_mesh = SubResource("ArrayMesh_0clxy")
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_uvhb6"]
 shading_mode = 2
@@ -377,7 +457,7 @@ resource_name = "PanelDark"
 cull_mode = 2
 albedo_color = Color(0.34637442, 0.34637442, 0.34637442, 1)
 albedo_texture = ExtResource("16_xabox")
-metallic = 0.8
+metallic = 0.69
 roughness = 0.9
 emission = Color(0.4627451, 0.023529412, 0.8, 1)
 normal_texture = ExtResource("17_uvhb6")
@@ -387,19 +467,14 @@ uv1_offset = Vector3(0, -5, 0)
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mb2n3"]
 resource_name = "Glass"
 cull_mode = 2
-albedo_color = Color(0.9063318, 0.9063318, 0.9063318, 1)
-metallic = 1.0
-roughness = 0.0
-emission_enabled = true
-emission = Color(0.735357, 0.735357, 0.735357, 1)
+shading_mode = 0
+albedo_color = Color(0.90588236, 0.1882353, 0.101960786, 1)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_3j746"]
 resource_name = "Red"
 cull_mode = 2
+shading_mode = 0
 albedo_color = Color(0.9064652, 0.05931271, 0, 1)
-roughness = 0.5
-emission_enabled = true
-emission = Color(0.90588444, 0.058824692, 0, 1)
 
 [sub_resource type="ArrayMesh" id="ArrayMesh_1bngm"]
 _surfaces = [{
@@ -506,17 +581,22 @@ blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_1bngm")
 
 [node name="MainScene" type="Node3D" unique_id=1483918031]
+script = ExtResource("1_n0v1a")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=2037474417]
+transform = Transform3D(-0.8660254, -0.43301278, 0.25, 0, 0.49999997, 0.86602545, -0.50000006, 0.75, -0.43301266, 0, 0, 0)
+shadow_enabled = true
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1241392909]
 environment = SubResource("Environment_tkmsp")
 
 [node name="Player" parent="." unique_id=1047638996 instance=ExtResource("1_8sucx")]
-transform = Transform3D(-0.9998611, 0, 0.016667223, 0, 1, 0, -0.016667223, 0, -0.9998611, 0, 0, -11.386995)
+transform = Transform3D(0.9989721, 0, 0.045328103, 0, 1, 0, -0.045328103, 0, 0.9989721, 0, 0, -11.386995)
 current = true
 
 [node name="OffbrandSolarSystem" type="Node3D" parent="." unique_id=1892502979]
 unique_name_in_owner = true
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.9779003, -4.4441123)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5964308, -4.4441123)
 script = ExtResource("2_3qyon")
 Spinny_Amount = 0.03
 Can_Be_Damaged = false
@@ -583,11 +663,15 @@ banking = 2.0
 [node name="Friendly_Ship" parent="Boid Manager" unique_id=1817235139 instance=ExtResource("6_654x7")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -100, 0)
 
+[node name="Friendly Space Fighter" parent="Boid Manager/Friendly_Ship" index="0" unique_id=432688072]
+mesh = SubResource("ArrayMesh_7balh")
+
 [node name="Enemy_Ship" parent="Boid Manager" unique_id=1987000872 instance=ExtResource("7_lhke2")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, -100, 0)
 
 [node name="Enemy Space Fighter" parent="Boid Manager/Enemy_Ship" index="0" unique_id=279252645]
 ignore_occlusion_culling = true
+mesh = SubResource("ArrayMesh_f76pn")
 
 [node name="Friendly_mult_mesh" type="MultiMeshInstance3D" parent="Boid Manager" unique_id=2049053012]
 process_mode = 3
@@ -620,7 +704,7 @@ draw_pass_1 = SubResource("QuadMesh_v4hrs")
 
 [node name="Friendly MotherShip" type="Node3D" parent="." unique_id=1224971762 node_paths=PackedStringArray("DEBUG_Marker_Mesh", "Solar_System_Root", "Main_Mesh")]
 unique_name_in_owner = true
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.82389796, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.645927, -0.82389796, -9.75295)
 script = ExtResource("13_u3x7j")
 DEBUG_Marker_Mesh = NodePath("../Friendly Mothership Debug Target Point")
 Solar_System_Root = NodePath("../OffbrandSolarSystem")
@@ -667,23 +751,25 @@ Friendly_MultiMesh = NodePath("../Boid Manager/Friendly_mult_mesh")
 Enemy_Spawn_Point = NodePath("../Enemy MotherShip")
 Enemy_Mesh = NodePath("../Boid Manager/Enemy_Ship/Enemy Space Fighter")
 Enemy_MultiMesh = NodePath("../Boid Manager/Enemy_mult_mesh")
-Enemy_Pool_Amount = 1.0
+Enemy_Pool_Amount = 0.5
 max_speed = 40.0
 banking = 10.0
 mass = 10.0
 
 [node name="Enemy MotherShip" parent="." unique_id=1277338013 node_paths=PackedStringArray("DEBUG_Marker_Mesh", "Solar_System_Root") instance=ExtResource("16_v4hrs")]
 unique_name_in_owner = true
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5271701, 1.1920929e-07, 1.4308846)
+transform = Transform3D(-0.99936247, 0, 0.03570194, 0, 1, 0, -0.03570194, 0, -0.99936247, 5.0448833, 0.16452372, 1.4308846)
 script = ExtResource("13_u3x7j")
 DEBUG_Marker_Mesh = NodePath("../Enemy Mothership Debug Target Point")
 Solar_System_Root = NodePath("../OffbrandSolarSystem")
 
 [node name="PillarOfAutumn" parent="Enemy MotherShip" index="0" unique_id=1455172275]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.47286558, 4.93389, -13.236389)
 mesh = SubResource("ArrayMesh_n0v1a")
 
 [node name="Boid_Target" type="Marker3D" parent="Enemy MotherShip" unique_id=1323389110]
 transform = Transform3D(-0.7392786, 0, 0.6733996, 0, 1, 0, -0.6733996, 0, -0.7392786, 0, 1.6736029, 0)
 
+[editable path="Boid Manager/Friendly_Ship"]
 [editable path="Boid Manager/Enemy_Ship"]
 [editable path="Enemy MotherShip"]
