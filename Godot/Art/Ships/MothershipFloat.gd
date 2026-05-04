@@ -176,10 +176,13 @@ func _cache_planets() -> void:
 
 
 func _pick_new_target() -> void:
-    if mode == FloatMode.ENEMY_SOLAR_SHELL:
+    if mode == FloatMode.ENEMY_SOLAR_SHELL and not Boid_Manager.IS_PEACE_ACHIEVED:
         target_point = _pick_enemy_shell_point()
+    elif mode == FloatMode.ENEMY_SOLAR_SHELL and Boid_Manager.IS_PEACE_ACHIEVED:
+        target_point = Vector3(9000,0,0)
     else:
         target_point = _pick_friendly_planet_standoff_point()
+    
     _update_debug_target_node_position()
     repick_timer = repick_seconds
 

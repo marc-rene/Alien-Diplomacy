@@ -363,8 +363,13 @@ func _process(delta: float) -> void:
         
     if friendly_boid_target_node:
         friendly_pos = friendly_boid_target_node.global_position
-    if enemy_boid_target_node:
+    if enemy_boid_target_node and not IS_PEACE_ACHIEVED:
         enemy_pos = enemy_boid_target_node.global_position - enemy_boid_target_node.position
+        
+    if IS_PEACE_ACHIEVED:
+        enemy_pos = Vector3(90000, 0, 0)
+        max_speed = 3
+        
         #for i in range(Max_Num_Boids / 2):
             #OFFSETS_comp[i * 2 - 1] = OFFSETS_comp[i] * -1.1 
             #OFFSETS_comp[i+1] = OFFSETS_comp[i+1] * 1.01 
@@ -625,6 +630,10 @@ func Increase_Enemy_Pool_Size(new_amount: float):
 func Decrease_Enemy_Pool_Size(reduction_amount : float):
     Enemy_Pool_Amount -= reduction_amount
     Enemy_Pool_Amount = clampf(Enemy_Pool_Amount, 0.0001, 1.0)
-    
+
+static var IS_PEACE_ACHIEVED : bool = false
+
+func Peace_Achieved():
+    IS_PEACE_ACHIEVED = true
     
     
