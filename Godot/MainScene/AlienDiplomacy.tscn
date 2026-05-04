@@ -1,0 +1,192 @@
+[gd_scene format=3 uid="uid://bau84352tox0a"]
+
+[ext_resource type="Script" uid="uid://bvcf4vhgvf6vi" path="res://MainScene/AlienDiplomacy.gd" id="1_r1oyn"]
+[ext_resource type="Script" uid="uid://cwmheclul04bv" path="res://Boids Test/Boid/Boid_Manager.gd" id="2_boidmgr"]
+[ext_resource type="PackedScene" uid="uid://bnmk3q8jripxr" path="res://Art/Ships/Friendly_Ship.glb" id="3_y6wk4"]
+[ext_resource type="PackedScene" uid="uid://b7yyvvp7g02hq" path="res://Art/Ships/Enemy_Ship.glb" id="4_l12y5"]
+[ext_resource type="PackedScene" uid="uid://cdkojrqd5o300" path="res://Player/Player.tscn" id="5_blnab"]
+[ext_resource type="PackedScene" uid="uid://clujaf3u776a3" path="res://addons/godot-xr-tools/objects/viewport_2d_in_3d.tscn" id="6_f3ewb"]
+[ext_resource type="PackedScene" uid="uid://erun0f16ifda" path="res://Test Area for Speech to text/Typing test.tscn" id="7_typing"]
+[ext_resource type="Script" uid="uid://djnwwqja7k7xt" path="res://Scripts/Viewport2DIn3DHandTouch.gd" id="8_touch"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_dl8ov"]
+sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
+ground_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
+
+[sub_resource type="Sky" id="Sky_6wfik"]
+sky_material = SubResource("ProceduralSkyMaterial_dl8ov")
+
+[sub_resource type="Environment" id="Environment_ecogi"]
+background_mode = 2
+sky = SubResource("Sky_6wfik")
+tonemap_mode = 2
+glow_enabled = true
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_yngf2"]
+shading_mode = 0
+albedo_color = Color(0.20845, 0.55, 0.1045, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_i5i1a"]
+material = SubResource("StandardMaterial3D_yngf2")
+size = Vector3(0.12, 0.04, 0.07)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_i5i1a"]
+shading_mode = 0
+albedo_color = Color(0.68, 0.10880002, 0.10880002, 1)
+
+[sub_resource type="PrismMesh" id="PrismMesh_dl8ov"]
+material = SubResource("StandardMaterial3D_i5i1a")
+left_to_right = 2.0
+size = Vector3(0.12, 0.04, 0.07)
+
+[sub_resource type="MultiMesh" id="MultiMesh_i5i1a"]
+transform_format = 1
+
+[sub_resource type="MultiMesh" id="MultiMesh_yngf2"]
+transform_format = 1
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6wfik"]
+transparency = 1
+shading_mode = 2
+albedo_color = Color(0.38039216, 1, 0.1882353, 0.5411765)
+
+[sub_resource type="SphereMesh" id="SphereMesh_ecogi"]
+material = SubResource("StandardMaterial3D_6wfik")
+radius = 0.25
+height = 0.5
+radial_segments = 4
+rings = 4
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dl8ov"]
+transparency = 1
+shading_mode = 2
+albedo_color = Color(1, 0.32941177, 0.32941177, 0.49411765)
+
+[sub_resource type="SphereMesh" id="SphereMesh_yngf2"]
+material = SubResource("StandardMaterial3D_dl8ov")
+radius = 0.25
+height = 0.5
+radial_segments = 4
+rings = 4
+
+[node name="AlienDiplomacy" type="Node3D" unique_id=2127710614]
+script = ExtResource("1_r1oyn")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1933345420]
+environment = SubResource("Environment_ecogi")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=509432611]
+transform = Transform3D(-0.8660254, -0.43301278, 0.25, 0, 0.49999997, 0.86602545, -0.50000006, 0.75, -0.43301266, 0, 0, 0)
+shadow_enabled = true
+
+[node name="Player" parent="." unique_id=1047638996 instance=ExtResource("5_blnab")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.02762109, 0, 1.4617646)
+
+[node name="BoidManager" type="Node3D" parent="." unique_id=1111111111 node_paths=PackedStringArray("Friendly_Spawn_Point", "Friendly_Mesh", "Friendly_MultiMesh", "Enemy_Spawn_Point", "Enemy_Mesh", "Enemy_MultiMesh")]
+script = ExtResource("2_boidmgr")
+Max_Num_Boids = 10000
+Friendly_Spawn_Point = NodePath("Friendly_Mesh")
+Friendly_Mesh = NodePath("Friendly_Ship/Friendly Space Fighter")
+Friendly_MultiMesh = NodePath("Friendly_Mesh_MultiManager")
+Enemy_Spawn_Point = NodePath("Enemy_Mesh")
+Enemy_Mesh = NodePath("Enemy_Ship/Enemy Space Fighter")
+Enemy_MultiMesh = NodePath("Enemy_Mesh_MultiManager")
+max_speed = 10.0
+banking = 0.8
+mass = 8.0
+
+[node name="Friendly_Mesh" type="MeshInstance3D" parent="BoidManager" unique_id=1341324297]
+physics_interpolation_mode = 2
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1)
+ignore_occlusion_culling = true
+mesh = SubResource("BoxMesh_i5i1a")
+
+[node name="Enemy_Mesh" type="MeshInstance3D" parent="BoidManager" unique_id=1424924531]
+physics_interpolation_mode = 2
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1)
+rotation_edit_mode = 2
+ignore_occlusion_culling = true
+mesh = SubResource("PrismMesh_dl8ov")
+
+[node name="Friendly_Mesh_MultiManager" type="MultiMeshInstance3D" parent="BoidManager" unique_id=735583061]
+physics_interpolation_mode = 2
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.051083446, 0, 0)
+rotation_edit_mode = 2
+cast_shadow = 0
+ignore_occlusion_culling = true
+visibility_range_end = 1000.0
+multimesh = SubResource("MultiMesh_i5i1a")
+
+[node name="Enemy_Mesh_MultiManager" type="MultiMeshInstance3D" parent="BoidManager" unique_id=752904399]
+physics_interpolation_mode = 2
+ignore_occlusion_culling = true
+multimesh = SubResource("MultiMesh_yngf2")
+
+[node name="Friend_NamNam" type="Marker3D" parent="BoidManager" unique_id=808211701]
+physics_interpolation_mode = 2
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.2426741, -0.45398873, -0.5308094)
+gizmo_extents = 0.5
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BoidManager/Friend_NamNam" unique_id=1000628899]
+physics_interpolation_mode = 2
+ignore_occlusion_culling = true
+mesh = SubResource("SphereMesh_ecogi")
+
+[node name="Label3D" type="Label3D" parent="BoidManager/Friend_NamNam" unique_id=661496338]
+physics_interpolation_mode = 2
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+billboard = 1
+no_depth_test = true
+texture_filter = 0
+text = "FRANCE"
+
+[node name="Enemy_NamNam" type="Marker3D" parent="BoidManager" unique_id=1847058683]
+physics_interpolation_mode = 2
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.20774412, 0.3113215, -0.5308094)
+gizmo_extents = 0.5
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BoidManager/Enemy_NamNam" unique_id=747362283]
+physics_interpolation_mode = 2
+ignore_occlusion_culling = true
+mesh = SubResource("SphereMesh_yngf2")
+
+[node name="Label3D" type="Label3D" parent="BoidManager/Enemy_NamNam" unique_id=982726508]
+physics_interpolation_mode = 2
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+billboard = 1
+no_depth_test = true
+texture_filter = 0
+text = "ESTONIA"
+
+[node name="OffbrandSolarSystem" type="Marker3D" parent="BoidManager" unique_id=222222222]
+unique_name_in_owner = true
+
+[node name="Friendly MotherShip" type="Marker3D" parent="BoidManager" unique_id=333333333]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.2426741, -0.45398873, -0.5308094)
+
+[node name="Enemy MotherShip" type="Marker3D" parent="BoidManager" unique_id=444444444]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.20774412, 0.3113215, -0.5308094)
+
+[node name="Friendly_Ship" parent="BoidManager" unique_id=388842883 instance=ExtResource("3_y6wk4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6256354, 0, -1.9138678)
+
+[node name="Enemy_Ship" parent="BoidManager" unique_id=1719176744 instance=ExtResource("4_l12y5")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.2336822, 0, -0.94770336)
+
+[node name="Viewport2Din3D" parent="." unique_id=456937873 instance=ExtResource("6_f3ewb")]
+process_mode = 3
+transform = Transform3D(1.5, 0, 0, 0, 1.5, 0, 0, 0, 1.5, 5.9604645e-08, 1.2576575, 0.7071604)
+screen_size = Vector2(0.5, 0.5)
+scene = ExtResource("7_typing")
+viewport_size = Vector2(500, 500)
+unshaded = true
+scene_properties_keys = PackedStringArray("TypingTest.gd")
+
+[node name="Node" type="Node" parent="Viewport2Din3D" unique_id=306719]
+script = ExtResource("8_touch")
+hand_collision_mask = 4294967295
+
+[editable path="BoidManager/Friendly_Ship"]
+[editable path="BoidManager/Enemy_Ship"]

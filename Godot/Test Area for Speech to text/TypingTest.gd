@@ -10,9 +10,13 @@ const ROWS: Array = [
     ["SPACE"],
 ]
 
+signal outcome_reached(outcome: String)  # "peace", "war", "stalemate"
+
 var ai_chat: Node = null
 var ai_busy: bool = false
 var _warming_up: bool = false
+var _outcome_declared: bool = false
+var _exchange_count: int = 0
 var _token_buffer: String = ""
 var _flush_timer: float = 0.0
 const FLUSH_INTERVAL: float = 0.05
@@ -214,7 +218,22 @@ func _setup_nobodywho() -> void:
 
     ai_chat = ClassDB.instantiate("NobodyWhoChat")
     ai_chat.name = "NobodyWhoChat"
-    ai_chat.set("system_prompt", "You are Commander Zyx, a battle-hardened space pirate from the Outer Rim. You speak with authority and menace, use space pirate slang, and keep your answers short and intimidating.")
+    ai_chat.set("system_prompt", """You are Dave, a ruthless space pirate warlord who has launched a boid fleet invasion of a planetary system. A diplomat is trying to negotiate with you to stop the attack.
+
+Your personality: proud, greedy, aggressive. You respect strength, clever deals, real tribute. You despise weakness, empty promises, and flattery.
+
+Always reply with 1-3 sentences in character first. Then, only when you are truly ready to declare an outcome, append a tag on a new line at the very end:
+- Convinced by a strong offer or deal: append [OUTCOME:PEACE]
+- Angered, insulted, or fed up: append [OUTCOME:WAR]
+- Still negotiating: no tag at all.
+
+Example of a peace response:
+"Hmm. That tribute is... acceptable. You have bought your planets one more cycle, diplomat. [OUTCOME:PEACE]"
+
+Example of a war response:
+"You dare insult me with that offer?! The fleet doubles its attack! [OUTCOME:WAR]"
+
+Never output a tag without a real response before it. Never explain the tags.""")
     ai_chat.set("model_node", model)
     add_child(ai_chat)
 
@@ -326,7 +345,7 @@ func _send_message() -> void:
     line_edit.text = ""
     line_edit.editable = false
     chat_label.append_text("[color=cyan]You:[/color] " + msg + "\n")
-    chat_label.append_text("[color=cyan]Space Pirate Commander:[/color] ")
+    chat_label.append_text("[color=cyan]Dave:[/color] ")
     ai_chat.ask(msg)
     _start_alien_voice()
 
@@ -355,7 +374,9 @@ func _on_response_updated(new_token: String) -> void:
 func _on_response_finished(_response: String) -> void:
     _stop_alien_voice()
     if not _token_buffer.is_empty():
-        chat_label.append_text(_token_buffer)
+        var cleaned := _token_buffer.replace("[OUTCOME:PEACE]", "").replace("[OUTCOME:WAR]", "").strip_edges()
+        if not cleaned.is_empty():
+            chat_label.append_text(cleaned)
         _token_buffer = ""
     if _warming_up:
         _warming_up = false
@@ -365,7 +386,26 @@ func _on_response_finished(_response: String) -> void:
         chat_label.append_text("[color=green]Connection established.[/color]\n")
         print("Warmup complete")
         return
+    _exchange_count += 1
+    _check_outcome(_response)
     chat_label.append_text("\n")
     ai_busy = false
     line_edit.editable = true
     line_edit.grab_focus()
+
+
+func _check_outcome(response: String) -> void:
+    if _outcome_declared:
+        return
+    if "[OUTCOME:PEACE]" in response:
+        _outcome_declared = true
+        _set_emotion("happy")
+        outcome_reached.emit("peace")
+        get_tree().call_group("outcome_listener", "receive_outcome", "peace")
+        print("Outcome: PEACE")
+    elif "[OUTCOME:WAR]" in response:
+        _outcome_declared = true
+        _set_emotion("angry")
+        outcome_reached.emit("war")
+        get_tree().call_group("outcome_listener", "receive_outcome", "war")
+        print("Outcome: WAR")
