@@ -807,7 +807,7 @@ Enemy_Spawn_Point = NodePath("../Enemy MotherShip")
 Enemy_Mesh = NodePath("../Boid Manager/Enemy_Ship/Enemy Space Fighter")
 Enemy_MultiMesh = NodePath("../Boid Manager/Enemy_mult_mesh")
 Enemy_Pool_Amount = 0.3
-max_speed = 30.0
+max_speed = 40.0
 mass = 10.0
 
 [node name="Enemy MotherShip" parent="." unique_id=1277338013 node_paths=PackedStringArray("DEBUG_Marker_Mesh", "Solar_System_Root") instance=ExtResource("16_v4hrs")]
