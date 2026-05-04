@@ -128,11 +128,11 @@ size = Vector2(0.1, 0.1)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xd67x"]
 resource_name = "Hull"
-cull_mode = 1
-albedo_color = Color(5.7756904e-07, 0.5411326, 0.19102025, 1)
-metallic = 0.09
-metallic_specular = 0.43
-roughness = 0.54
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.09019608, 0.47843137, 0.105882354, 1)
+metallic = 0.32
+metallic_specular = 0.45
+roughness = 0.58
 emission = Color(1, 1, 1, 1)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ep5m6"]
@@ -358,19 +358,19 @@ render_priority = 0
 shader = SubResource("Shader_xabox")
 shader_parameter/albedo = Color(0.5227701, 0.5227701, 0.5227701, 1)
 shader_parameter/texture_albedo = ExtResource("16_xabox")
-shader_parameter/albedo_texture_size = Vector2i(1024, 1024)
+shader_parameter/albedo_texture_size = Vector2i(256, 256)
 shader_parameter/point_size = 1.0
 shader_parameter/roughness = 0.62
 shader_parameter/metallic_texture_channel = Vector4(1, 0, 0, 0)
-shader_parameter/specular = 0.5
-shader_parameter/metallic = 0.5
+shader_parameter/specular = 0.53999998792992
+shader_parameter/metallic = 0.48999998904752
 shader_parameter/texture_normal = ExtResource("17_uvhb6")
 shader_parameter/normal_scale = 0.0
-shader_parameter/uv1_scale = Vector3(6, 6, 1)
+shader_parameter/uv1_scale = Vector3(32, 4, 1)
 shader_parameter/uv1_offset = Vector3(0, 0, 0)
-shader_parameter/uv2_scale = Vector3(1, 1, 1)
+shader_parameter/uv2_scale = Vector3(0, 0, 0)
 shader_parameter/uv2_offset = Vector3(0, 0, 0)
-shader_parameter/uv_pan_speed = Vector2(0.1, 0)
+shader_parameter/uv_pan_speed = Vector2(0.2, 0)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0ojld"]
 resource_name = "PanelDark"
@@ -560,7 +560,7 @@ Spinny_Amount = 0.9
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6720197, 0)
 
 [node name="PlanetArakis" parent="OffbrandSolarSystem" unique_id=142728121 instance=ExtResource("7_uvhb6")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.53118134, -1.9779003, 13.062946)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.144657, -1.9779003, -4.831015)
 
 [node name="Boid_Target" type="Marker3D" parent="OffbrandSolarSystem/PlanetArakis" unique_id=427044915]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.62, 0, 0)
@@ -620,7 +620,7 @@ draw_pass_1 = SubResource("QuadMesh_v4hrs")
 
 [node name="Friendly MotherShip" type="Node3D" parent="." unique_id=1224971762 node_paths=PackedStringArray("DEBUG_Marker_Mesh", "Solar_System_Root", "Main_Mesh")]
 unique_name_in_owner = true
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.588807, 0, -8.413261)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.82389796, 0)
 script = ExtResource("13_u3x7j")
 DEBUG_Marker_Mesh = NodePath("../Friendly Mothership Debug Target Point")
 Solar_System_Root = NodePath("../OffbrandSolarSystem")
@@ -674,17 +674,16 @@ mass = 10.0
 
 [node name="Enemy MotherShip" parent="." unique_id=1277338013 node_paths=PackedStringArray("DEBUG_Marker_Mesh", "Solar_System_Root") instance=ExtResource("16_v4hrs")]
 unique_name_in_owner = true
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.833385, 0, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5271701, 1.1920929e-07, 1.4308846)
 script = ExtResource("13_u3x7j")
 DEBUG_Marker_Mesh = NodePath("../Enemy Mothership Debug Target Point")
 Solar_System_Root = NodePath("../OffbrandSolarSystem")
 
 [node name="PillarOfAutumn" parent="Enemy MotherShip" index="0" unique_id=1455172275]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.215956, 0, 11.640164)
 mesh = SubResource("ArrayMesh_n0v1a")
 
 [node name="Boid_Target" type="Marker3D" parent="Enemy MotherShip" unique_id=1323389110]
-transform = Transform3D(-0.7392786, 0, 0.6733996, 0, 1, 0, -0.6733996, 0, -0.7392786, 9.221912, 4.130572, 4.77701)
+transform = Transform3D(-0.7392786, 0, 0.6733996, 0, 1, 0, -0.6733996, 0, -0.7392786, 0, 1.6736029, 0)
 
 [editable path="Boid Manager/Enemy_Ship"]
 [editable path="Enemy MotherShip"]
