@@ -633,7 +633,7 @@ func Decrease_Enemy_Pool_Size(reduction_amount : float):
 
 static var IS_PEACE_ACHIEVED : bool = false
 
-func Peace_Achieved():
+static func Peace_Achieved():
     IS_PEACE_ACHIEVED = true
     
     
