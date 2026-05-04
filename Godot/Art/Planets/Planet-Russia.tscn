@@ -1,0 +1,38 @@
+[gd_scene format=3 uid="uid://b7sveunfbsxtv"]
+
+[ext_resource type="Shader" uid="uid://dt6txrvefp8cw" path="res://Art/Planets/Shaders/Planet_Body_Shader.gdshader" id="1_r2grn"]
+[ext_resource type="Texture2D" uid="uid://u5f6ps3q8rh3" path="res://Art/Planets/Noises/Earth-Looking.tres" id="2_5yvmi"]
+[ext_resource type="Script" uid="uid://bwwd6u40q6jog" path="res://Art/Planets/Solar_System.gd" id="3_c6d6a"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_3iko2"]
+render_priority = 0
+shader = ExtResource("1_r2grn")
+shader_parameter/emit = 0.0
+shader_parameter/color_1 = Color(0.81960785, 0.84313726, 0.03529412, 1)
+shader_parameter/color_1_treshold = 0.3600000171
+shader_parameter/color_1_roughness = 0.1
+shader_parameter/color_1_emit = false
+shader_parameter/color_2 = Color(0.65882355, 0.5882353, 0.15686275, 1)
+shader_parameter/color_2_treshold = 0.458000021755
+shader_parameter/color_3 = Color(1, 0.49411765, 0.32941177, 1)
+shader_parameter/color_3_treshold = 0.58000002755
+shader_parameter/color_4 = Color(0.9941098, 0.37669048, 0.14255694, 1)
+shader_parameter/color_4_treshold = 0.8750000415625
+shader_parameter/color_5 = Color(0.96255654, 0, 0.09248062, 1)
+shader_parameter/color_5_treshold = 1.0
+shader_parameter/noise_gaseous = true
+shader_parameter/noise_gaseous_speed = 0.10000000149012
+shader_parameter/noise_scale = 1.12800000608
+shader_parameter/noise = ExtResource("2_5yvmi")
+
+[sub_resource type="SphereMesh" id="SphereMesh_k0128"]
+material = SubResource("ShaderMaterial_3iko2")
+radius = 0.2
+height = 0.4
+radial_segments = 20
+rings = 16
+
+[node name="PlanetParisInSummer" type="MeshInstance3D" unique_id=732950670]
+mesh = SubResource("SphereMesh_k0128")
+script = ExtResource("3_c6d6a")
+Spinny_Amount = 0.09

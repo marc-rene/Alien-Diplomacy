@@ -1,0 +1,38 @@
+[gd_scene format=3 uid="uid://b4rcjlan664yi"]
+
+[ext_resource type="Shader" uid="uid://dt6txrvefp8cw" path="res://Art/Planets/Shaders/Planet_Body_Shader.gdshader" id="1_eqty3"]
+[ext_resource type="Texture2D" uid="uid://u5f6ps3q8rh3" path="res://Art/Planets/Noises/Earth-Looking.tres" id="2_pqml4"]
+[ext_resource type="Script" uid="uid://bwwd6u40q6jog" path="res://Art/Planets/Solar_System.gd" id="3_1h38o"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_3iko2"]
+render_priority = 0
+shader = ExtResource("1_eqty3")
+shader_parameter/emit = 0.0
+shader_parameter/color_1 = Color(0.5856725, 0.56110626, 0.4106327, 1)
+shader_parameter/color_1_treshold = 0.470000022325
+shader_parameter/color_1_roughness = 1.0
+shader_parameter/color_1_emit = false
+shader_parameter/color_2 = Color(0.680937, 0.5873332, 0.43274996, 1)
+shader_parameter/color_2_treshold = 0.5200000247
+shader_parameter/color_3 = Color(0.6957643, 0.64292717, 0.51372814, 1)
+shader_parameter/color_3_treshold = 0.58000002755
+shader_parameter/color_4 = Color(0.6901684, 0.5028488, 0, 1)
+shader_parameter/color_4_treshold = 0.70000003325
+shader_parameter/color_5 = Color(0.31764707, 0.45490196, 1, 1)
+shader_parameter/color_5_treshold = 1.0
+shader_parameter/noise_gaseous = false
+shader_parameter/noise_gaseous_speed = 0.0
+shader_parameter/noise_scale = 1.0
+shader_parameter/noise = ExtResource("2_pqml4")
+
+[sub_resource type="SphereMesh" id="SphereMesh_k0128"]
+material = SubResource("ShaderMaterial_3iko2")
+radius = 1.2
+height = 2.4
+radial_segments = 20
+rings = 16
+
+[node name="PlanetArakis" type="MeshInstance3D" unique_id=732950670]
+mesh = SubResource("SphereMesh_k0128")
+script = ExtResource("3_1h38o")
+Spinny_Amount = 0.09
