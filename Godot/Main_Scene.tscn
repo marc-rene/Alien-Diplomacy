@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" uid="uid://c0ygdpy0qlwxa" path="res://Art/Planets/Planet-Moony.tscn" id="3_tkmsp"]
 [ext_resource type="PackedScene" uid="uid://c5xelfdy6wwhs" path="res://Art/Planets/Planet-Jupity.tscn" id="4_qtktj"]
 [ext_resource type="PackedScene" uid="uid://jlqwun0g1bgi" path="res://Art/Planets/Planet-SUN.tscn" id="5_654x7"]
+[ext_resource type="FontFile" uid="uid://bh3waiycl6i0b" path="res://Art/Font/Glipervelz-Origy FULL.ttf" id="5_f76pn"]
 [ext_resource type="PackedScene" uid="uid://bnmk3q8jripxr" path="res://Art/Ships/Friendly_Ship.glb" id="6_654x7"]
 [ext_resource type="Script" uid="uid://ccv06n3wu22of" path="res://Boids/Boid_Manager_V2.gd" id="7_kj35w"]
 [ext_resource type="PackedScene" uid="uid://b7yyvvp7g02hq" path="res://Art/Ships/Enemy_Ship.glb" id="7_lhke2"]
@@ -591,7 +592,7 @@ shadow_enabled = true
 environment = SubResource("Environment_tkmsp")
 
 [node name="Player" parent="." unique_id=1047638996 instance=ExtResource("1_8sucx")]
-transform = Transform3D(0.9989721, 0, 0.045328103, 0, 1, 0, -0.045328103, 0, 0.9989721, 0, 0, -11.386995)
+transform = Transform3D(0.9989721, 0, 0.045328103, 0, 1, 0, -0.045328103, 0, 0.9989721, -1.3140137, 0, -11.386995)
 current = true
 
 [node name="OffbrandSolarSystem" type="Node3D" parent="." unique_id=1892502979]
@@ -609,6 +610,15 @@ Spinny_Amount = 0.5
 [node name="Boid_Target" type="Marker3D" parent="OffbrandSolarSystem/PlanetEarthy" unique_id=1658755638]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1.1, -1)
 
+[node name="Label3D" type="Label3D" parent="OffbrandSolarSystem/PlanetEarthy" unique_id=1698349184]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.022013, 0)
+pixel_size = 0.003
+billboard = 2
+text = "EARTH"
+font = ExtResource("5_f76pn")
+font_size = 120
+outline_size = 24
+
 [node name="PlanetMoony" parent="OffbrandSolarSystem" unique_id=1810502287 instance=ExtResource("3_tkmsp")]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.945059, 3.3648312, 4.429068)
@@ -616,6 +626,15 @@ Spinny_Amount = 1.4
 
 [node name="Boid_Target" type="Marker3D" parent="OffbrandSolarSystem/PlanetMoony" unique_id=792452596]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+
+[node name="Label3D" type="Label3D" parent="OffbrandSolarSystem/PlanetMoony" unique_id=706982980]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.42, 0)
+pixel_size = 0.003
+billboard = 2
+text = "MOON"
+font = ExtResource("5_f76pn")
+font_size = 120
+outline_size = 24
 
 [node name="PlanetKnockOffJupiter" parent="OffbrandSolarSystem" unique_id=1882243003 instance=ExtResource("4_qtktj")]
 unique_name_in_owner = true
@@ -625,12 +644,31 @@ Spinny_Amount = 0.3
 [node name="Boid_Target" type="Marker3D" parent="OffbrandSolarSystem/PlanetKnockOffJupiter" unique_id=1985382791]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 1.8)
 
+[node name="Label3D" type="Label3D" parent="OffbrandSolarSystem/PlanetKnockOffJupiter" unique_id=1661286533]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.24, 0)
+pixel_size = 0.003
+billboard = 2
+text = "JUPITER"
+font = ExtResource("5_f76pn")
+font_size = 120
+outline_size = 24
+
 [node name="THE GODDAMN SUN" parent="OffbrandSolarSystem" unique_id=1124456154 instance=ExtResource("5_654x7")]
 unique_name_in_owner = true
 Spinny_Amount = 0.1
 
 [node name="Boid_Target" type="Marker3D" parent="OffbrandSolarSystem/THE GODDAMN SUN" unique_id=769014234]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.92179096, -3.072513, 0.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.92179096, -2.251948, 0.5)
+
+[node name="Label3D" type="Label3D" parent="OffbrandSolarSystem/THE GODDAMN SUN" unique_id=773498500]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.185, 0)
+pixel_size = 0.003
+billboard = 2
+modulate = Color(1, 1, 0.40392157, 1)
+text = "EARTH"
+font = ExtResource("5_f76pn")
+font_size = 120
+outline_size = 24
 
 [node name="PlanetHOT" parent="OffbrandSolarSystem" unique_id=1440232814 instance=ExtResource("8_0ojld")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.167649, 1.217241, 1.5433688)
@@ -639,11 +677,30 @@ Spinny_Amount = 0.9
 [node name="Boid_Target" type="Marker3D" parent="OffbrandSolarSystem/PlanetHOT" unique_id=117425287]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6720197, 0)
 
+[node name="Label3D" type="Label3D" parent="OffbrandSolarSystem/PlanetHOT" unique_id=1766264688]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.37, 0)
+pixel_size = 0.002
+billboard = 2
+text = "MERCURY"
+font = ExtResource("5_f76pn")
+font_size = 120
+outline_size = 24
+
 [node name="PlanetArakis" parent="OffbrandSolarSystem" unique_id=142728121 instance=ExtResource("7_uvhb6")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.144657, -1.9779003, -4.831015)
+Spinny_Amount = -0.1
 
 [node name="Boid_Target" type="Marker3D" parent="OffbrandSolarSystem/PlanetArakis" unique_id=427044915]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.62, 0, 0)
+
+[node name="Label3D" type="Label3D" parent="OffbrandSolarSystem/PlanetArakis" unique_id=991680115]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.405, 0)
+pixel_size = 0.003
+billboard = 2
+text = "ARRAKIS"
+font = ExtResource("5_f76pn")
+font_size = 120
+outline_size = 24
 
 [node name="Boid Manager" type="Node3D" parent="." unique_id=878142912 node_paths=PackedStringArray("Friendly_Spawn_Point", "Friendly_MultiMesh", "Friendly_Ship_Mesh", "Friendly_Bolts_MultiMesh", "Enemy_MultiMesh", "Enemy_Ship_Mesh", "Enemy_Bolts_MultiMesh")]
 process_mode = 4
@@ -704,7 +761,6 @@ draw_pass_1 = SubResource("QuadMesh_v4hrs")
 
 [node name="Friendly MotherShip" type="Node3D" parent="." unique_id=1224971762 node_paths=PackedStringArray("DEBUG_Marker_Mesh", "Solar_System_Root", "Main_Mesh")]
 unique_name_in_owner = true
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.645927, -0.82389796, -9.75295)
 script = ExtResource("13_u3x7j")
 DEBUG_Marker_Mesh = NodePath("../Friendly Mothership Debug Target Point")
 Solar_System_Root = NodePath("../OffbrandSolarSystem")
@@ -744,27 +800,25 @@ shape = SubResource("BoxShape3D_kj35w")
 
 [node name="Old_Scuffed_Boids" type="Node3D" parent="." unique_id=702924345 node_paths=PackedStringArray("Friendly_Spawn_Point", "Friendly_Mesh", "Friendly_MultiMesh", "Enemy_Spawn_Point", "Enemy_Mesh", "Enemy_MultiMesh")]
 script = ExtResource("15_wtuui")
-Max_Num_Boids = 1000
+Max_Num_Boids = 2000
+Friendly_Enemy_Count_Ratio = 0.4
 Friendly_Spawn_Point = NodePath("../Friendly MotherShip")
 Friendly_Mesh = NodePath("../Boid Manager/Friendly_Ship/Friendly Space Fighter")
 Friendly_MultiMesh = NodePath("../Boid Manager/Friendly_mult_mesh")
 Enemy_Spawn_Point = NodePath("../Enemy MotherShip")
 Enemy_Mesh = NodePath("../Boid Manager/Enemy_Ship/Enemy Space Fighter")
 Enemy_MultiMesh = NodePath("../Boid Manager/Enemy_mult_mesh")
-Enemy_Pool_Amount = 0.5
 max_speed = 40.0
-banking = 10.0
-mass = 10.0
+mass = 15.0
 
 [node name="Enemy MotherShip" parent="." unique_id=1277338013 node_paths=PackedStringArray("DEBUG_Marker_Mesh", "Solar_System_Root") instance=ExtResource("16_v4hrs")]
 unique_name_in_owner = true
-transform = Transform3D(-0.99936247, 0, 0.03570194, 0, 1, 0, -0.03570194, 0, -0.99936247, 5.0448833, 0.16452372, 1.4308846)
+transform = Transform3D(-0.99936247, 0, 0.03570194, 0, 1, 0, -0.03570194, 0, -0.99936247, 0.94892454, 2.531416, 2.3319669)
 script = ExtResource("13_u3x7j")
 DEBUG_Marker_Mesh = NodePath("../Enemy Mothership Debug Target Point")
 Solar_System_Root = NodePath("../OffbrandSolarSystem")
 
 [node name="PillarOfAutumn" parent="Enemy MotherShip" index="0" unique_id=1455172275]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.47286558, 4.93389, -13.236389)
 mesh = SubResource("ArrayMesh_n0v1a")
 
 [node name="Boid_Target" type="Marker3D" parent="Enemy MotherShip" unique_id=1323389110]

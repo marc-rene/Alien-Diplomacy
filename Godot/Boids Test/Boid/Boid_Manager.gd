@@ -24,7 +24,7 @@ var max_friendly_count := 0
 @export var Enemy_MultiMesh : MultiMeshInstance3D
 
 ## What percentage of Enemies can we spawn? 1.0 means spawn everyone
-@export var Enemy_Pool_Amount : float = 0.2
+static var Enemy_Pool_Amount : float = 0.2
 
 @export var max_speed := 2.0
 @export var banking := 0.05
@@ -192,8 +192,8 @@ var keep_spawning_e : bool = true
 const max_offset : float = 10.0
 var cam_point : Transform3D
 
-var friendly_pos : Vector3 = Vector3(0, 100, 0)
-var enemy_pos : Vector3  = Vector3(0, -100, 0)
+var friendly_pos : Vector3 = Vector3(0, 50, 0)
+var enemy_pos : Vector3  = Vector3(0, -50, 0)
 
 var french = 0
 var eeees = 0
@@ -229,6 +229,10 @@ func _set_currently_pulsing_target(new_target_node: Node) -> void:
 
     if _currently_pulsing_target != null:
         _currently_pulsing_target.Pulse_Targeted_Red()
+
+
+## every X frames lets change things up
+@export var Do_Change_Every_X_Frame : int = 2000
 
 func _process(delta: float) -> void:
     
@@ -317,21 +321,22 @@ func _process(delta: float) -> void:
     
     if frame_fence % 9001 == 0: 
         for i in range(Max_Num_Boids):
-            OFFSETS_comp.encode_s8(i, randi_range(-2, 2))
+            OFFSETS_comp.encode_s8(i, randi_range(-1, 1))
             if OFFSETS_comp[i] == 0:
                 OFFSETS_comp[i] += 1
     if frame_fence % 19001 == 0: 
         for i in range(Max_Num_Boids):
-            OFFSETS_comp.encode_s8(i, randi_range(-3, 3))
+            OFFSETS_comp.encode_s8(i, randi_range(-2, 2))
             if OFFSETS_comp[i] == 0:
                 OFFSETS_comp[i] += 1
     if frame_fence % 28979 == 0: 
         for i in range(Max_Num_Boids):
-            OFFSETS_comp.encode_s8(i, randi_range(-4, 4))
+            OFFSETS_comp.encode_s8(i, randi_range(-3, 3))
             if OFFSETS_comp[i] == 0:
                 OFFSETS_comp[i] += 1
     
-    if frame_fence % 1000 == 0: 
+    
+    if frame_fence % Do_Change_Every_X_Frame == 0: 
         
         print("FPS: " + str(Engine.get_frames_per_second()) )
         print("Homies: " + str(Friendly_MultiMesh.multimesh.instance_count) + "\tbuffer size: " + str(Friendly_MultiMesh.multimesh.buffer.size()))
@@ -418,9 +423,9 @@ func _physics_process(delta: float) -> void:
         #target_pos.z = randfn(target_pos.z, 1.0)        
         #var to_target = make_blurry(target_node.global_position, 1.0 / ((ent % 20) + 1)) - get_boid_transform(ent).origin
         to_target = target_pos - new_trans.origin
-        to_target.x += clampf((randf_range(0.001, 1.1) * OFFSETS_comp[ent]), 0.0, 1)
+        to_target.x += clampf((randf_range(-1.1, 1.1) * OFFSETS_comp[ent]), -1.0, 1)
         to_target.y += clampf((randf_range(-1.8, 1.8) * OFFSETS_comp[ent]), -1.0, 2)
-        to_target.z += clampf((randf_range(0.001, 1.1) * OFFSETS_comp[ent]), -1.0, 1)
+        to_target.z += clampf((randf_range(-1.1, 1.1) * OFFSETS_comp[ent]), -1.0, 1)
         desried = to_target.normalized() * max_speed # max speed
         
         force = desried - VELOCITIES_comp[ent]
@@ -621,19 +626,19 @@ func spawn_enemy(force_spawn = false) -> bool:
 
 
 ## new_amount: 0.1 means increase the pool size from X by 10% (capped at 100%)
-func Increase_Enemy_Pool_Size(new_amount: float):
+static func Increase_Enemy_Pool_Size(new_amount: float):
     Enemy_Pool_Amount += new_amount
     Enemy_Pool_Amount = clampf(Enemy_Pool_Amount, 0.0001, 1.0)
     
 
 ## Decrease pool by X percent
-func Decrease_Enemy_Pool_Size(reduction_amount : float):
+static func Decrease_Enemy_Pool_Size(reduction_amount : float):
     Enemy_Pool_Amount -= reduction_amount
     Enemy_Pool_Amount = clampf(Enemy_Pool_Amount, 0.0001, 1.0)
 
 static var IS_PEACE_ACHIEVED : bool = false
 
-func Peace_Achieved():
+static func Peace_Achieved():
     IS_PEACE_ACHIEVED = true
     
     
