@@ -592,7 +592,7 @@ shadow_enabled = true
 environment = SubResource("Environment_tkmsp")
 
 [node name="Player" parent="." unique_id=1047638996 instance=ExtResource("1_8sucx")]
-transform = Transform3D(0.9989721, 0, 0.045328103, 0, 1, 0, -0.045328103, 0, 0.9989721, 0, 0, -11.386995)
+transform = Transform3D(0.9989721, 0, 0.045328103, 0, 1, 0, -0.045328103, 0, 0.9989721, -1.3140137, 0, -11.386995)
 current = true
 
 [node name="OffbrandSolarSystem" type="Node3D" parent="." unique_id=1892502979]
@@ -658,7 +658,7 @@ unique_name_in_owner = true
 Spinny_Amount = 0.1
 
 [node name="Boid_Target" type="Marker3D" parent="OffbrandSolarSystem/THE GODDAMN SUN" unique_id=769014234]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.92179096, -3.072513, 0.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.92179096, -2.251948, 0.5)
 
 [node name="Label3D" type="Label3D" parent="OffbrandSolarSystem/THE GODDAMN SUN" unique_id=773498500]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.185, 0)
@@ -688,6 +688,7 @@ outline_size = 24
 
 [node name="PlanetArakis" parent="OffbrandSolarSystem" unique_id=142728121 instance=ExtResource("7_uvhb6")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.144657, -1.9779003, -4.831015)
+Spinny_Amount = -0.1
 
 [node name="Boid_Target" type="Marker3D" parent="OffbrandSolarSystem/PlanetArakis" unique_id=427044915]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.62, 0, 0)
@@ -799,26 +800,25 @@ shape = SubResource("BoxShape3D_kj35w")
 
 [node name="Old_Scuffed_Boids" type="Node3D" parent="." unique_id=702924345 node_paths=PackedStringArray("Friendly_Spawn_Point", "Friendly_Mesh", "Friendly_MultiMesh", "Enemy_Spawn_Point", "Enemy_Mesh", "Enemy_MultiMesh")]
 script = ExtResource("15_wtuui")
-Max_Num_Boids = 1000
+Max_Num_Boids = 2000
+Friendly_Enemy_Count_Ratio = 0.4
 Friendly_Spawn_Point = NodePath("../Friendly MotherShip")
 Friendly_Mesh = NodePath("../Boid Manager/Friendly_Ship/Friendly Space Fighter")
 Friendly_MultiMesh = NodePath("../Boid Manager/Friendly_mult_mesh")
 Enemy_Spawn_Point = NodePath("../Enemy MotherShip")
 Enemy_Mesh = NodePath("../Boid Manager/Enemy_Ship/Enemy Space Fighter")
 Enemy_MultiMesh = NodePath("../Boid Manager/Enemy_mult_mesh")
-Enemy_Pool_Amount = 0.3
 max_speed = 40.0
-mass = 10.0
+mass = 15.0
 
 [node name="Enemy MotherShip" parent="." unique_id=1277338013 node_paths=PackedStringArray("DEBUG_Marker_Mesh", "Solar_System_Root") instance=ExtResource("16_v4hrs")]
 unique_name_in_owner = true
-transform = Transform3D(-0.99936247, 0, 0.03570194, 0, 1, 0, -0.03570194, 0, -0.99936247, 5.0448833, 0.16452372, 1.4308846)
+transform = Transform3D(-0.99936247, 0, 0.03570194, 0, 1, 0, -0.03570194, 0, -0.99936247, 0.94892454, 2.531416, 2.3319669)
 script = ExtResource("13_u3x7j")
 DEBUG_Marker_Mesh = NodePath("../Enemy Mothership Debug Target Point")
 Solar_System_Root = NodePath("../OffbrandSolarSystem")
 
 [node name="PillarOfAutumn" parent="Enemy MotherShip" index="0" unique_id=1455172275]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.47286558, 4.93389, -13.236389)
 mesh = SubResource("ArrayMesh_n0v1a")
 
 [node name="Boid_Target" type="Marker3D" parent="Enemy MotherShip" unique_id=1323389110]

@@ -192,8 +192,8 @@ var keep_spawning_e : bool = true
 const max_offset : float = 10.0
 var cam_point : Transform3D
 
-var friendly_pos : Vector3 = Vector3(0, 100, 0)
-var enemy_pos : Vector3  = Vector3(0, -100, 0)
+var friendly_pos : Vector3 = Vector3(0, 50, 0)
+var enemy_pos : Vector3  = Vector3(0, -50, 0)
 
 var french = 0
 var eeees = 0
