@@ -12,6 +12,7 @@ const ROWS: Array = [
 
 var ai_chat: Node = null
 var ai_busy: bool = false
+var _warming_up: bool = false
 
 
 func _ready() -> void:
@@ -106,12 +107,51 @@ func _setup_nobodywho() -> void:
     ai_chat.connect("response_finished", _on_response_finished)
 
     chat_label.text = ""
-    chat_label.append_text("[color=green]AI ready — start talking![/color]\n")
-    print("NobodyWho ready in TypingTest")
+    chat_label.append_text("[color=yellow]Connecting...[/color]\n")
+    print("NobodyWho ready in TypingTest — warming up")
+    _warming_up = true
+    ai_busy = true
+    ai_chat.ask(".")
+
+
+func _make_holo_style(bg_alpha: float) -> StyleBoxFlat:
+    var s := StyleBoxFlat.new()
+    s.bg_color = Color(0.0, 0.8, 1.0, bg_alpha)
+    s.border_color = Color(0.0, 1.0, 1.0, 0.9)
+    s.set_border_width_all(1)
+    s.set_corner_radius_all(6)
+    s.content_margin_left = 2
+    s.content_margin_right = 2
+    s.content_margin_top = 2
+    s.content_margin_bottom = 2
+    return s
 
 
 func _build_keyboard() -> void:
     var vbox: VBoxContainer = $MarginContainer/VBoxContainer
+
+    # Holographic panel background
+    var panel_style := StyleBoxFlat.new()
+    panel_style.bg_color = Color(0.0, 0.05, 0.15, 0.75)
+    panel_style.border_color = Color(0.0, 0.9, 1.0, 0.6)
+    panel_style.set_border_width_all(2)
+    panel_style.set_corner_radius_all(10)
+    add_theme_stylebox_override("panel", panel_style)
+
+    # Holographic LineEdit
+    var line_style := StyleBoxFlat.new()
+    line_style.bg_color = Color(0.0, 0.4, 1.0, 0.85)
+    line_style.border_color = Color(0.0, 1.0, 1.0, 0.8)
+    line_style.set_border_width_all(1)
+    line_style.set_corner_radius_all(4)
+    line_edit.add_theme_stylebox_override("normal", line_style)
+    line_edit.add_theme_stylebox_override("focus", line_style)
+    line_edit.add_theme_color_override("font_color", Color(0.0, 1.0, 1.0, 1.0))
+    line_edit.add_theme_color_override("caret_color", Color(0.0, 1.0, 1.0, 1.0))
+    line_edit.add_theme_color_override("selection_color", Color(0.0, 0.6, 0.8, 0.5))
+
+    # Chat label color
+    chat_label.add_theme_color_override("default_color", Color(0.0, 0.9, 1.0, 1.0))
 
     var keyboard_vbox := VBoxContainer.new()
     keyboard_vbox.name = "KeyboardRows"
@@ -130,6 +170,13 @@ func _build_keyboard() -> void:
             btn.text = key
             btn.size_flags_horizontal = SIZE_EXPAND_FILL
             btn.size_flags_vertical = SIZE_EXPAND_FILL
+            btn.add_theme_stylebox_override("normal", _make_holo_style(0.12))
+            btn.add_theme_stylebox_override("hover", _make_holo_style(0.35))
+            btn.add_theme_stylebox_override("pressed", _make_holo_style(0.6))
+            btn.add_theme_stylebox_override("focus", _make_holo_style(0.12))
+            btn.add_theme_color_override("font_color", Color(0.0, 1.0, 1.0, 1.0))
+            btn.add_theme_color_override("font_hover_color", Color(0.8, 1.0, 1.0, 1.0))
+            btn.add_theme_color_override("font_pressed_color", Color(1.0, 1.0, 1.0, 1.0))
             btn.pressed.connect(_on_key_pressed.bind(key))
             hbox.add_child(btn)
 
@@ -164,15 +211,25 @@ func _send_message() -> void:
     line_edit.text = ""
     line_edit.editable = false
     chat_label.append_text("[color=cyan]You:[/color] " + msg + "\n")
-    chat_label.append_text("[color=white]AI:[/color] ")
+    chat_label.append_text("[color=cyan]Space Pirate Commander:[/color] ")
     ai_chat.ask(msg)
 
 
 func _on_response_updated(new_token: String) -> void:
+    if _warming_up:
+        return
     chat_label.append_text(new_token)
 
 
 func _on_response_finished(_response: String) -> void:
+    if _warming_up:
+        _warming_up = false
+        ai_busy = false
+        line_edit.editable = true
+        chat_label.text = ""
+        chat_label.append_text("[color=green]Connection established.[/color]\n")
+        print("Warmup complete")
+        return
     chat_label.append_text("\n")
     ai_busy = false
     line_edit.editable = true

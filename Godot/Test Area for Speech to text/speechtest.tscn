@@ -5,7 +5,6 @@
 [ext_resource type="PackedScene" uid="uid://clujaf3u776a3" path="res://addons/godot-xr-tools/objects/viewport_2d_in_3d.tscn" id="5_11cvw"]
 [ext_resource type="PackedScene" uid="uid://erun0f16ifda" path="res://Test Area for Speech to text/Typing test.tscn" id="6_jjp7m"]
 [ext_resource type="Script" uid="uid://djnwwqja7k7xt" path="res://Scripts/Viewport2DIn3DHandTouch.gd" id="7_jjp7m"]
-[ext_resource type="PackedScene" uid="uid://rwmo0p7bqnb5" path="res://LMM Test/lmmchatwindow.tscn" id="8_rdt0e"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_fy0sh"]
 sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
@@ -31,7 +30,7 @@ current = true
 
 [node name="Viewport2Din3D" parent="." unique_id=456937873 instance=ExtResource("5_11cvw")]
 process_mode = 3
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.9604645e-08, 1.0187521, -0.7250647)
+transform = Transform3D(1.5, 0, 0, 0, 1.5, 0, 0, 0, 1.5, 5.9604645e-08, 1.0187521, -0.7250647)
 screen_size = Vector2(0.5, 0.5)
 scene = ExtResource("6_jjp7m")
 viewport_size = Vector2(500, 500)
@@ -41,14 +40,3 @@ scene_properties_keys = PackedStringArray("TypingTest.gd")
 [node name="Node" type="Node" parent="Viewport2Din3D" unique_id=306719]
 script = ExtResource("7_jjp7m")
 hand_collision_mask = 4294967295
-
-[node name="Viewport2Din3D2" parent="." unique_id=1279149385 instance=ExtResource("5_11cvw")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.76438, 0.8515043, -0.71916395)
-screen_size = Vector2(0.6, 0.5)
-scene = ExtResource("8_rdt0e")
-viewport_size = Vector2(600, 600)
-scene_properties_keys = PackedStringArray("aichat.gd")
-
-[node name="Viewport2DIn3DHandTouch" type="Node" parent="Viewport2Din3D2" unique_id=1585338130]
-script = ExtResource("7_jjp7m")
-metadata/_custom_type_script = "uid://djnwwqja7k7xt"
