@@ -24,7 +24,7 @@ var max_friendly_count := 0
 @export var Enemy_MultiMesh : MultiMeshInstance3D
 
 ## What percentage of Enemies can we spawn? 1.0 means spawn everyone
-@export var Enemy_Pool_Amount : float = 0.2
+static var Enemy_Pool_Amount : float = 0.2
 
 @export var max_speed := 2.0
 @export var banking := 0.05
@@ -626,13 +626,13 @@ func spawn_enemy(force_spawn = false) -> bool:
 
 
 ## new_amount: 0.1 means increase the pool size from X by 10% (capped at 100%)
-func Increase_Enemy_Pool_Size(new_amount: float):
+static func Increase_Enemy_Pool_Size(new_amount: float):
     Enemy_Pool_Amount += new_amount
     Enemy_Pool_Amount = clampf(Enemy_Pool_Amount, 0.0001, 1.0)
     
 
 ## Decrease pool by X percent
-func Decrease_Enemy_Pool_Size(reduction_amount : float):
+static func Decrease_Enemy_Pool_Size(reduction_amount : float):
     Enemy_Pool_Amount -= reduction_amount
     Enemy_Pool_Amount = clampf(Enemy_Pool_Amount, 0.0001, 1.0)
 
