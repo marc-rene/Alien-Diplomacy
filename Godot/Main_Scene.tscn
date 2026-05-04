@@ -29,11 +29,40 @@ ambient_light_color = Color(1, 1, 1, 1)
 reflected_light_source = 1
 tonemap_mode = 2
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_v4hrs"]
+shading_mode = 2
+disable_ambient_light = true
+disable_fog = true
+disable_specular_occlusion = true
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.4627451, 0.8666667, 0.16862746, 1)
+disable_receive_shadows = true
+
+[sub_resource type="PrismMesh" id="PrismMesh_kj35w"]
+material = SubResource("StandardMaterial3D_v4hrs")
+size = Vector3(0.02, 0.02, 0.2)
+
 [sub_resource type="MultiMesh" id="MultiMesh_wqxms"]
 transform_format = 1
+mesh = SubResource("PrismMesh_kj35w")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xabox"]
+shading_mode = 2
+disable_ambient_light = true
+disable_fog = true
+disable_specular_occlusion = true
+vertex_color_use_as_albedo = true
+albedo_color = Color(1, 0.38431373, 0.5019608, 1)
+texture_filter = 0
+disable_receive_shadows = true
+
+[sub_resource type="PrismMesh" id="PrismMesh_uvhb6"]
+material = SubResource("StandardMaterial3D_xabox")
+size = Vector3(0.2, 0.2, 0.3)
 
 [sub_resource type="MultiMesh" id="MultiMesh_4ityq"]
 transform_format = 1
+mesh = SubResource("PrismMesh_uvhb6")
 
 [sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_kj35w"]
 lifetime_randomness = 0.3
@@ -261,14 +290,16 @@ Spinny_Amount = 0.3
 [node name="THE GODDAMN SUN" parent="OffbrandSolarSystem" unique_id=1124456154 instance=ExtResource("5_654x7")]
 Spinny_Amount = 0.1
 
-[node name="Boid Manager" type="Node3D" parent="." unique_id=878142912 node_paths=PackedStringArray("Friendly_Spawn_Point", "Friendly_MultiMesh", "Friendly_Bolts_MultiMesh", "Enemy_Spawn_Point", "Enemy_MultiMesh")]
+[node name="Boid Manager" type="Node3D" parent="." unique_id=878142912 node_paths=PackedStringArray("Friendly_Spawn_Point", "Friendly_MultiMesh", "Friendly_Bolts_MultiMesh", "Enemy_Spawn_Point", "Enemy_MultiMesh", "Enemy_Bolts_MultiMesh")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.090516, 0, 0)
 script = ExtResource("7_kj35w")
+MAX_NUMBER_OF_BOIDS = 50
 Friendly_Spawn_Point = NodePath("../Friendly MotherShip")
 Friendly_MultiMesh = NodePath("Friendly_mult_mesh")
-Friendly_Bolts_MultiMesh = NodePath("Friendly_mult_mesh")
+Friendly_Bolts_MultiMesh = NodePath("Friendly_Bolts_mult_mesh")
 Enemy_Spawn_Point = NodePath("../Enemy MotherShip")
 Enemy_MultiMesh = NodePath("Enemy_mult_mesh")
+Enemy_Bolts_MultiMesh = NodePath("Enemy_Bolts_mult_mesh")
 
 [node name="Friendly_Ship" parent="Boid Manager" unique_id=435205655 instance=ExtResource("6_654x7")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -100, 0)
@@ -287,7 +318,14 @@ ignore_occlusion_culling = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1)
 multimesh = SubResource("MultiMesh_wqxms")
 
+[node name="Friendly_Bolts_mult_mesh" type="MultiMeshInstance3D" parent="Boid Manager" unique_id=259977382]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1)
+multimesh = SubResource("MultiMesh_wqxms")
+
 [node name="Enemy_mult_mesh" type="MultiMeshInstance3D" parent="Boid Manager" unique_id=1500831070]
+multimesh = SubResource("MultiMesh_4ityq")
+
+[node name="Enemy_Bolts_mult_mesh" type="MultiMeshInstance3D" parent="Boid Manager" unique_id=2081545285]
 multimesh = SubResource("MultiMesh_4ityq")
 
 [node name="GPUParticles3D" type="GPUParticles3D" parent="Boid Manager" unique_id=994173181]
