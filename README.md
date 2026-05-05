@@ -1,5 +1,6 @@
 
 
+
   
 
 # Alien Diplomacy
@@ -353,7 +354,68 @@ Permissions on the Quest 3S turned out to be a nightmare, getting the correct pe
 For the alien voice I used Godot's AudioStreamGenerator to push raw sine wave frames in real time during generation, modulating the frequency and wobble based on keyword detection in the response so the character actually sounds different when it's angry versus when it's accepting a deal,all without a single audio asset. 
 
 Getting the chat UI into VR space meant routing signals through Godot's group system since a Viewport2Din3D sub viewport is isolated from the main scene tree, so a direct signal connection simply doesn't reach the boids.
-## César
-Using Multmeshes and adopting an ECS style approach was definetly different. Many of the workflows with other Boids couldn't be adopted 1-to-1 and had to be changed. 
 
-Originally I was going to have bolts and cannons but with multmeshes this proved to be too janky.
+## César
+
+Using Multmeshes and adopting an ECS style approach was definetly different. 
+
+Many of the workflows with other Boids couldn't be adopted 1-to-1 and had to be changed due to not having easy access to each boids position using the usual Godot workflow.
+
+Making sure performance was solid enough to get up to 210,000 boids *(on desktop)*, and about 9,000 on the Meta Quest 3S, was also a BIG challenge.
+Performance was a key factor and constantly tested and I learned how to properly use the Godot Profiler. 
+Rather than having every boids next position and behaviour be calculated and pushed to the various multmesh buffers all on the render tick, which KILLED performance, we had to be smart.
+
+### Getting Offbrand Physics DLSS *(Physics SwapChain)*
+ - **First attempt** was to do everything on the physics tick instead. This helped somewhat but performance very quickly plummeted if we had too many boids. This is where I learned about the *[Physics Death Spiral](https://docs.godotengine.org/en/stable/classes/class_projectsettings.html#class-projectsettings-property-physics-common-max-physics-steps-per-frame)* where if the physics tick ever takes longer than the maximum time its allocated, it will try catch up with itself and the render thread suffers and performance plummets.
+ - **Second attempt** was to simply raise the maximum time each physics tick could take. Originally it was ~60 ticks per second and lowering it to ~30 caused no major visual differences, and the performance was vastly improved. But of course, there wasn't enough boids to make it look REALLY cool so we had to do more. Bryan was able to get to 40K-60K boids so I knew we were able to get more.
+ - **Third attempt** was to use multithreading. The original idea was to have a background thread calculate all steering behaviours, weights, everything, all in the background. Once it was finished, it would then signal a mutex that the physics thread then knew it was ready to push to the multimeshes. 
+ Although this works in theory, this caused extreme performance loss as Godot seemed to struggle when doing anything that involved the scene tree as physics thread and render thread seem to sync well, but a thread created by me in GDScript didn't have this same robustness. Performance wasn't high enough for the boids count we wanted.
+
+- In many Video Games. When performance drops, the scene might not render at 100%, it might drop to 70% instead. I thought *"Why not do something similar with the maximum Physics Tick time?"*. So for the **Fourth attempt**, a score was given. If the FPS dropped below a certain threshold, the score quickly dropped, if the performance was "ok", it slowly raised back up. At the end of the frame, the physics tick rate was determined based off this. 
+This meant we could have a Physics tick rate of 30 times per second, but if performance got back and we were about to have a [Physics Death Spiral](https://docs.godotengine.org/en/stable/classes/class_projectsettings.html#class-projectsettings-property-physics-common-max-physics-steps-per-frame), the Physics tick rate would lower, maybe down to 5 temporarily, Just to ensure that we never had a spiral. 
+Once performance stabilised, the tick rate would rise back to normal slowly. We were able to break the 40K boid barrier with this method, but we wanted to get to 6-digit boid counts. 
+
+- After a while I noticed that using functions like [MultiMeshes](https://docs.godotengine.org/en/stable/classes/class_multimesh.html#class-multimesh-method-get-instance-transform)' `Get_Instance_Transform()` were fine for a few thousand boids. But when we got to 10K -> 30K, the profiler really complained about it. 
+This is because Multimeshes have all data primarily stay on the GPU *(Mesh GPU instancing)*. 
+The flow of data is the CPU to the GPU, then getting all the Transform3D's from the GPU to the CPU, calculate new boid transforms, then back to the GPU to render it. 
+My **Fifth attempt** was to make a **PackedFloat32Array** *(the same one used by the MultiMesh)* which stores all the transforms of all boids. Although this was hell as we were dealing with the raw numbers rather than having everything as a Transform3D type which would make development easier, this made sure that the flow of data was strictly from the CPU, to the GPU, and that's it.
+We easily got up to 6-digit boid counts. This by far had the biggest impact... but we still wanted to make it cooler... so **MORE BOIDS**!!!
+
+
+#### The Solution
+
+So from what we learnt in previous attempts:
+ 
+ - We can't use external separate threads due to sync issues with anything affecting the scene tree.
+
+ - Physics tick can NEVER take more time than is allocated to it, otherwise a [Physics Death Spiral](https://docs.godotengine.org/en/stable/classes/class_projectsettings.html#class-projectsettings-property-physics-common-max-physics-steps-per-frame) occurs.
+ - Render thread is off-limits for any behaviour/steering calculations of **ALL** boids.
+ 
+ - MultiMeshes functionality for **Setting** buffers is great and quick, but **Getting** buffers and instance transforms, is unacceptably slow. 
+ 
+Using what we learnt. The final attempt was the **"Offbrand Physics DLSS"**. Making use of Godot Multimesh [set buffer interpolated](https://docs.godotengine.org/en/stable/classes/class_multimesh.html#class-multimesh-method-set-buffer-interpolated) 
+I got 2 **PackedFloat32Array**'s. Every frame, there will be the "**Current**" **buffer**, and a "**Previous**" **buffer**. We do all our boid behaviour maths and edit transforms on the Current buffer. We then set the Multimesh to interpolate between the previous buffer, and the current one.
+
+The next frame, they switch. The current buffer is now marked as the "previous buffer", and the old previous buffer is now marked as the current buffer. 
+This swap means although the physics tick could be 15, it's effectively doubled to 30.
+
+This swapping of buffers, coupled with the runtime physics tick adjuster mentioned in the **Fourth Attempt**, means we could get up to ~210,000 boids on screen. 
+
+
+#### Issues
+
+Originally I was going to have bolts and projectiles also using this "Offbrand Physics DLSS". I made sure that all planets and ships shared the same "Damage" interface *(it's `Damagable.gd`)* so that boids when shooting a planet just had to call the Damage interface.
+
+The issue was that getting projectiles to work was too janky. 
+ - Bolts would appear from nowhere, or disappear immediately. 
+ - Corruption of Transform's meant we got seizure-inducing visuals.
+ - Projectiles wouldn't move at the correct velocities, if at all.
+ - Performance tanked to unacceptable levels.
+
+I tried to re-write the old mangled boid code, leading to `Boid_Manager_V2.gd` and `Boid_Manager_V3.gd`, but this didn't solve the issues.
+I learnt that writing cleaner code from the start could've made the boid system more maintainable. Using the `class_name` type in Godot from the start could have allowed for greater OOP operability.
+
+If I were to do this project again, with the knowledge I have now, I would make sure that my code, for boid manager and even the solar system/planets code, all follow SOLID principles from the planning stage, rather than implementing the SOLID principles during implementation.
+
+
+
