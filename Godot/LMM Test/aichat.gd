@@ -15,7 +15,7 @@ func _ready() -> void:
 
         aiChat = ClassDB.instantiate("NobodyWhoChat")
         aiChat.name = "NobodyWhoChat"
-        aiChat.set("system_prompt", "You are Commander, a battle-hardened space pirate from the Outer Rim. You speak with authority and menace, use space pirate slang, and keep your answers short and intimidating.")
+        aiChat.set("system_prompt", "You are Commander D, a battle-hardened space pirate from the Outer Rim. You speak with authority and menace, use space pirate slang, and keep your answers short and intimidating.")
         aiChat.set("model_node", model_node)
         add_child(aiChat)
 
