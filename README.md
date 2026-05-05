@@ -343,16 +343,16 @@ The setup script downloads the two GGUF models and the NobodyWho addon into the 
 
 # What we learned
 ## Eduard
-Working with a local LLM in Godot is an absolute pain. Godot VR taught me that GEMMA needs very deliberate prompting to work as intended. Overly complex conditional instructions are ignored or just cause issues. 
+Working with a local LLM in Godot is an absolute pain. Godot VR taught me that GEMMA needs very deliberate prompting to work as intended. Overly complex conditional instructions are ignored or just cause issues. Having a more direct commanding prompt makes it respond more reliably.
 
-Having a more direct commanding prompt makes it respond more reliably. The most time consuming part was getting the LLM to work on the Meta Quest 3S. 
+The most time consuming part was getting the LLM to work on the Meta Quest 3S. File paths were an absolute mess to work with while also requiring ADB to push files to get everything working as intended. Also making sure the release build was used instead of the debug build would be the main reason if the APK would run on the headset. 
 
-File paths were an absolute mess to work with while also requiring ADB to push files to get everything working as intended. Also making sure the release build was used instead of the debug build would be the main reason if the APK would run on the headset. On top of that, getting the AI responses to actually trigger game events required building a token accumulation system from scratch, the response finished signal doesn't reliably carry the full text, so every token had to be caught and stored manually. 
+On top of that, getting the AI responses to actually trigger game events required building a token accumulation system from scratch, the response finished signal doesn't reliably carry the full text, so every token had to be caught and stored manually. Speech to text was originally the intended input method, making the diplomacy feel a lot more natural and immersive, but it had to be scrapped entirely.
 
+Permissions on the Quest 3S turned out to be a nightmare, getting the correct permissions declared, granted at runtime and this was a rabbit hole that ate significant time with nothing to show for it, so a virtual keyboard was built instead. 
 For the alien voice I used Godot's AudioStreamGenerator to push raw sine wave frames in real time during generation, modulating the frequency and wobble based on keyword detection in the response so the character actually sounds different when it's angry versus when it's accepting a deal,all without a single audio asset. 
 
 Getting the chat UI into VR space meant routing signals through Godot's group system since a Viewport2Din3D sub viewport is isolated from the main scene tree, so a direct signal connection simply doesn't reach the boids.
-
 ## César
 Using Multmeshes and adopting an ECS style approach was definetly different. Many of the workflows with other Boids couldn't be adopted 1-to-1 and had to be changed. 
 
