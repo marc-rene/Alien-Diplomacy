@@ -16,7 +16,7 @@
 [ext_resource type="Script" uid="uid://bldjalk4f6bnm" path="res://Art/Ships/MothershipFloat.gd" id="13_tqwg6"]
 [ext_resource type="Shader" uid="uid://bno7igielmva1" path="res://Art/Ships/Shooter.gdshader" id="14_f1hdt"]
 [ext_resource type="Shader" uid="uid://do03ck23mp0fb" path="res://Art/Ships/Bolt.gdshader" id="15_wo1v4"]
-[ext_resource type="Script" uid="uid://d2pn1ftwhob00" path="res://Boids/Spatial_Partition_Grid.gd" id="16_crt5h"]
+[ext_resource type="Script" path="res://Boids/Spatial_Partition_Grid.gd" id="16_crt5h"]
 [ext_resource type="Script" uid="uid://cwmheclul04bv" path="res://Boids Test/Boid/Boid_Manager.gd" id="17_x0hwa"]
 [ext_resource type="PackedScene" uid="uid://872umn4snn4x" path="res://Art/Ships/Enemy MotherShip - UNSC.glb" id="18_ciu2o"]
 [ext_resource type="Texture2D" uid="uid://rybm2h7q4vf6" path="res://Art/Ships/Enemy MotherShip - UNSC_Panelling.png" id="19_1vkbf"]
@@ -728,13 +728,13 @@ banking = 2.0
 [node name="Friendly_Ship" parent="Boid Manager" unique_id=1817235139 instance=ExtResource("11_3qicq")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -100, 0)
 
-[node name="Friendly Space Fighter" parent="Boid Manager/Friendly_Ship" index="0" unique_id=432688072]
+[node name="Friendly Space Fighter" parent="Boid Manager/Friendly_Ship" index="0" unique_id=430690400]
 mesh = SubResource("ArrayMesh_7balh")
 
 [node name="Enemy_Ship" parent="Boid Manager" unique_id=1987000872 instance=ExtResource("12_iuoo2")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, -100, 0)
 
-[node name="Enemy Space Fighter" parent="Boid Manager/Enemy_Ship" index="0" unique_id=279252645]
+[node name="Enemy Space Fighter" parent="Boid Manager/Enemy_Ship" index="0" unique_id=734912055]
 ignore_occlusion_culling = true
 mesh = SubResource("ArrayMesh_f76pn")
 
@@ -852,7 +852,7 @@ avoidance_look_ahead = 7.0
 avoidance_radius_multiplier = 3.0
 avoidance_emergency_weight = 5.0
 
-[node name="PillarOfAutumn" parent="Enemy MotherShip" index="0" unique_id=1455172275]
+[node name="PillarOfAutumn" parent="Enemy MotherShip" index="0" unique_id=1348346247]
 mesh = SubResource("ArrayMesh_n0v1a")
 
 [node name="Boid_Target" type="Marker3D" parent="Enemy MotherShip" unique_id=1323389110]
