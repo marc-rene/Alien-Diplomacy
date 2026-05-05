@@ -1,4 +1,5 @@
 
+
   
 
 # Alien Diplomacy
@@ -112,7 +113,7 @@ and using LLM, the commander can either be:
 
   
 
-# Progress so far
+# Overview
 
   
 
@@ -122,11 +123,10 @@ and using LLM, the commander can either be:
 
 Boids in this project are rendered using an **ECS-style** layout and [MultiMeshInstance3D](https://docs.godotengine.org/en/stable/classes/class_multimeshinstance3d.html) for **GPU instancing**
 
-That let's us reach **~210,000 boids** on an average PC and **~10,000** on the Meta Quest 3S.
+That let's us reach **~220,000 boids** on an average PC and **~10,000** on the Meta Quest 3S. When combined with the LLM the boids are reduced down to 4,000 to keep acceptable performance.
 
-  
 
-Physics tick rate and an optional double-buffer mode ("offbrand physics DLSS") are exposed so you can get extra smoothness on MultiMesh3D updating.
+Physics tick rate runs the buffer updating and an optional double-buffer mode ***("offbrand physics DLSS")*** are used so we get extra smoothness on MultiMesh3D updating.
 
 
 ![alt text](Assets/AA_SC_(2).png "Boids screenshot 1")
@@ -134,6 +134,23 @@ Physics tick rate and an optional double-buffer mode ("offbrand physics DLSS") a
 ![alt text](Assets/AA_SC_(4).png "Boids screenshot 3")
 ![alt text](Assets/AA_SC_(5).png "Boids screenshot 4")
 
+All boids will target different planets and swarm them.
+
+### Motherships
+Both Friendlies and Enemies have a **Mothership** which our boids spawn from.
+These motherships wander the solar system, using avoidance steering to avoid colliding into planets. 
+
+#### Enemy Mothership
+
+The enemy mothership will float to the border regions of the solar system, avoiding all of the planets and friendlys, keeping to the outside always.
+
+![Enemy Mothership](Assets/ENEMY_SHIP.png "Enemy Mothership")
+
+#### Friendly Mothership
+The friendly mothership will always try to be close to the planets. It will steer to avoid the planets aswell but will make sure to stay close to the action!
+
+
+![Friendly Mothership](Assets/FRIEND_SHIP.png "Friendly Mothership")
 
 ### Factions
 
@@ -190,7 +207,7 @@ Downloads run **in parallel** (3 items at once), then files are copied into the 
   
   
 
-# Future Plans
+# Original Plans *(Febuary)*
 
   
 
@@ -294,11 +311,9 @@ Any enemy boids directly in front of friendly boids will also be shot and have d
 
 applied to them.
 
-  
 
 ---
 
-  
 
 # Getting started
 
@@ -309,7 +324,9 @@ applied to them.
 2. -  **Windows:** double-click `Setup.bat`.
 	-  **Linux / macOS:**  Run the command `python3 Alien-Diplomacy/Setup/Setup.py`.
 
-3.  Open the `project.godot` in **Godot**
+3. Once your headset is connected and ADB is running, run `Godot/copy_model.ps1` using an Administrator Terminal Session. This will copy the LLM model to the headset.
+
+4.  Open the `project.godot` in **Godot**
 
   
 
@@ -322,3 +339,21 @@ The setup script downloads the two GGUF models and the NobodyWho addon into the 
 - [user-bge-m3-q8_0.gguf](https://huggingface.co/alela32/USER-bge-m3-Q8_0-GGUF/blob/main/user-bge-m3-q8_0.gguf) → place in `Godot/`
 
 - [NobodyWho Godot addon](https://github.com/nobodywho-ooo/nobodywho/releases) → extract into `Godot/addons/`
+
+
+# What we learned
+## Eduard
+Working with a local LLM in Godot is an absolute pain. Godot VR taught me that GEMMA needs very deliberate prompting to work as intended. Overly complex conditional instructions are ignored or just cause issues. 
+
+Having a more direct commanding prompt makes it respond more reliably. The most time consuming part was getting the LLM to work on the Meta Quest 3S. 
+
+File paths were an absolute mess to work with while also requiring ADB to push files to get everything working as intended. Also making sure the release build was used instead of the debug build would be the main reason if the APK would run on the headset. On top of that, getting the AI responses to actually trigger game events required building a token accumulation system from scratch, the response finished signal doesn't reliably carry the full text, so every token had to be caught and stored manually. 
+
+For the alien voice I used Godot's AudioStreamGenerator to push raw sine wave frames in real time during generation, modulating the frequency and wobble based on keyword detection in the response so the character actually sounds different when it's angry versus when it's accepting a deal,all without a single audio asset. 
+
+Getting the chat UI into VR space meant routing signals through Godot's group system since a Viewport2Din3D sub viewport is isolated from the main scene tree, so a direct signal connection simply doesn't reach the boids.
+
+## César
+Using Multmeshes and adopting an ECS style approach was definetly different. Many of the workflows with other Boids couldn't be adopted 1-to-1 and had to be changed. 
+
+Originally I was going to have bolts and cannons but with multmeshes this proved to be too janky.
