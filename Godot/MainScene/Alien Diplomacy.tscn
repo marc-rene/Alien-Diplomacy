@@ -707,7 +707,7 @@ outline_size = 24
 
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="OffbrandSolarSystem" unique_id=2107180814]
 stream = ExtResource("11_axaab")
-volume_db = -4.0
+volume_db = -25.0
 autoplay = true
 
 [node name="Boid Manager" type="Node3D" parent="." unique_id=878142912 node_paths=PackedStringArray("Friendly_Spawn_Point", "Friendly_MultiMesh", "Friendly_Ship_Mesh", "Friendly_Bolts_MultiMesh", "Enemy_MultiMesh", "Enemy_Ship_Mesh", "Enemy_Bolts_MultiMesh")]
