@@ -11,6 +11,7 @@
 [ext_resource type="PackedScene" uid="uid://b4rcjlan664yi" path="res://Art/Planets/Planet-Arakis.tscn" id="9_cpr8o"]
 [ext_resource type="Script" uid="uid://ccv06n3wu22of" path="res://Boids/Boid_Manager_V2.gd" id="10_ofjlo"]
 [ext_resource type="PackedScene" uid="uid://bnmk3q8jripxr" path="res://Art/Ships/Friendly_Ship.glb" id="11_3qicq"]
+[ext_resource type="AudioStream" uid="uid://b0capvvpplt3r" path="res://Art/Mass Effect - Citadel Theme.wav" id="11_axaab"]
 [ext_resource type="PackedScene" uid="uid://b7yyvvp7g02hq" path="res://Art/Ships/Enemy_Ship.glb" id="12_iuoo2"]
 [ext_resource type="Script" uid="uid://bldjalk4f6bnm" path="res://Art/Ships/MothershipFloat.gd" id="13_tqwg6"]
 [ext_resource type="Shader" uid="uid://bno7igielmva1" path="res://Art/Ships/Shooter.gdshader" id="14_f1hdt"]
@@ -703,6 +704,11 @@ text = "ARRAKIS"
 font = ExtResource("5_yns03")
 font_size = 120
 outline_size = 24
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="OffbrandSolarSystem" unique_id=2107180814]
+stream = ExtResource("11_axaab")
+volume_db = -4.0
+autoplay = true
 
 [node name="Boid Manager" type="Node3D" parent="." unique_id=878142912 node_paths=PackedStringArray("Friendly_Spawn_Point", "Friendly_MultiMesh", "Friendly_Ship_Mesh", "Friendly_Bolts_MultiMesh", "Enemy_MultiMesh", "Enemy_Ship_Mesh", "Enemy_Bolts_MultiMesh")]
 process_mode = 4
